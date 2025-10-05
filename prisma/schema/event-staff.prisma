@@ -1,0 +1,13 @@
+model EventStaff {
+  id         String   @id @default(uuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id])
+  staffId    String
+  staff      Customer @relation(fields: [staffId], references: [id], name: "StaffUser")
+  operatorId String
+  operator   Customer @relation(fields: [operatorId], references: [id], name: "Operator")
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
+
+  @@unique([eventId, staffId])
+}

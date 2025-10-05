@@ -1,0 +1,8 @@
+import { applyDecorators, Controller } from '@nestjs/common'
+
+/**
+ * 自动加入admin/前缀路由的Controller注解
+ */
+export function AdminController(prefix: string) {
+  return applyDecorators(Controller(`admin/${prefix}`))
+}

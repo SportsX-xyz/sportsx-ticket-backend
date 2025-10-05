@@ -1,0 +1,24 @@
+model Customer {
+  id               String             @id @default(uuid())
+  email            String             @unique @db.VarChar(255)
+  password         String?            @db.VarChar(255)
+  walletId         String?            @db.VarChar(255)
+  avatarUrl        String?            @db.VarChar(255)
+  isOrganizer      Boolean            @default(false)
+  resaleFeeRate    Int                @default(5)
+  maxResaleTimes   Int                @default(150)
+  status           CustomerStatus     @default(ACTIVE)
+  createdAt        DateTime           @default(now()) @db.Timestamptz
+  updatedAt        DateTime           @updatedAt @db.Timestamptz
+  tickets          EventTicket[] // 一对多关联
+  sellOrders       EventTicketOrder[] @relation("Seller") // 一对多关联
+  buyOrders        EventTicketOrder[] @relation("Buyer") // 一对多关联
+  staffAssignments EventStaff[]       @relation("StaffUser") // 新增：作为验票人
+  operatedStaff    EventStaff[]       @relation("Operator") // 新增：作为操作人
+  events           Event[]
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}

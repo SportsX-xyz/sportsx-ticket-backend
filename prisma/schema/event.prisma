@@ -1,0 +1,24 @@
+model Event {
+  id                String            @id @default(uuid())
+  name              String            @db.VarChar(255)
+  address           String            @db.VarChar(255)
+  startTime         DateTime          @db.Timestamptz
+  endTime           DateTime          @db.Timestamptz
+  ticketReleaseTime DateTime          @db.Timestamptz
+  stopSaleBefore    Int               @default(0) // 活动开始前停止售票的分钟数
+  status            EventStatus       @default(ACTIVE)
+  description       String?           @db.Text
+  createdAt         DateTime          @default(now()) @db.Timestamptz
+  updatedAt         DateTime          @updatedAt @db.Timestamptz
+  customer          Customer          @relation(fields: [customerId], references: [id])
+  customerId        String
+  tickets           EventTicket[] // 一对多关联
+  ticketTypes       EventTicketType[] // 一对多关联
+  staff             EventStaff[] // 新增：与 EventStaff 的关系
+}
+
+enum EventStatus {
+  ACTIVE
+  INACTIVE
+  DISABLED
+}

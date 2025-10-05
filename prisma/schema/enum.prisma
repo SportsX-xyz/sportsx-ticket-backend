@@ -1,0 +1,18 @@
+enum MenuType {
+  DIRECTORY // 目录类型资源
+  MENU // 菜单类型资源
+  FEATURE // 功能类型资源
+}
+
+enum ApiType {
+  DIRECTORY // 目录类型资源
+  API // 接口端点类型资源
+}
+
+enum ApiMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+}

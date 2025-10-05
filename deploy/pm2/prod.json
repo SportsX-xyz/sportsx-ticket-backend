@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "name": "tickets-backend-prod",
+      "script": "dist/src/main.js",
+      "error_file": "tickets-backend-prod-err.log",
+      "out_file": "tickets-backend-prod-out.log",
+      "log_file": "tickets-backend-prod-combined.log",
+      "time": true,
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ]
+}

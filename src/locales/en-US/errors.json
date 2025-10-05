@@ -1,0 +1,15 @@
+{
+  "validation.failed": "Validation failed",
+  "system.error": "System error",
+
+  "privy.missing.token": "Missing Privy token",
+  "privy.login.failed": "Privy login failed",
+
+  "customer.not.found": "Customer not found",
+  "customer.not.organizer": "Customer not organizer",
+  "customer.not.active": "Customer not active",
+
+  "event.not.found": "Event not found",
+  "event.not.belong.to.you": "Event not belong to you",
+  "event.staff.already.exists": "Event staff already exists"
+}

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Customer" ALTER COLUMN "walletId" DROP NOT NULL,
+ALTER COLUMN "resaleFeeRate" SET DEFAULT 5,
+ALTER COLUMN "maxResaleTimes" SET DEFAULT 150;

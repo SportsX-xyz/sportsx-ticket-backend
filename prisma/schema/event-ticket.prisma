@@ -1,0 +1,29 @@
+model EventTicket {
+  id            String             @id @default(uuid())
+  eventId       String
+  event         Event              @relation(fields: [eventId], references: [id])
+  ticketTypeId  String
+  ticketType    EventTicketType    @relation(fields: [ticketTypeId], references: [id])
+  rowNumber     Int
+  columnNumber  Int
+  name          String             @db.VarChar(100)
+  initialPrice  Decimal            @db.Decimal(10, 2)
+  currentPrice  Decimal            @db.Decimal(10, 2)
+  saleStartTime DateTime
+  saleEndTime   DateTime
+  status        TicketStatus       @default(NEW)
+  nftTokenId    String?            @db.VarChar(255)
+  ownerId       String?
+  owner         Customer?          @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime           @default(now()) @db.Timestamptz
+  updatedAt     DateTime           @updatedAt @db.Timestamptz
+  orders        EventTicketOrder[] // 一对多关联
+}
+
+enum TicketStatus {
+  NEW
+  SOLD
+  USED
+  RESALE
+  TIMEOUT
+}
