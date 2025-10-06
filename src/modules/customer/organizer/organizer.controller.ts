@@ -1,7 +1,7 @@
 import { Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common'
 import { UseGuards } from '@nestjs/common'
 import { CustomerAuthGuard } from '../core/guards/customer-auth.guard'
-import { ApiBearerAuth, ApiOperation, ApiProperty } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger'
 import { ApiTags } from '@nestjs/swagger'
 import { Inject } from '@nestjs/common'
 import { CUSTOMER_JWT_SERVICE } from '../auth/auth.module'
@@ -14,6 +14,8 @@ import { Body } from '@nestjs/common'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { AddEventStaffDto } from './dto/add-event-staff'
+import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
+import { UpdateEventTicketDto } from './dto/update-event-ticket.dot'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('organizer')
@@ -145,6 +147,81 @@ export class OrganizerController {
       req.user as unknown as CustomerJwtUserData,
       id,
       staffId
+    )
+  }
+
+  @Post('event/:id/ticket-type')
+  @ApiOperation({
+    summary: 'Add event ticket type',
+  })
+  async addEventTicketType(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Body() dto: AddEventTicketTypeDto
+  ) {
+    return this.organizerService.addEventTicketType(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      dto
+    )
+  }
+
+  @Get('event/:id/ticket-types')
+  @ApiOperation({
+    summary: 'Get event ticket types',
+  })
+  async getEventTicketTypes(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string
+  ) {
+    return this.organizerService.getEventTicketTypes(
+      req.user as unknown as CustomerJwtUserData,
+      id
+    )
+  }
+
+  @Delete('event/:id/ticket-type/:ticketTypeId')
+  @ApiOperation({
+    summary: 'Remove an event ticket type',
+  })
+  async removeEventTicketType(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Param('ticketTypeId') ticketTypeId: string
+  ) {
+    return this.organizerService.removeEventTicketType(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      ticketTypeId
+    )
+  }
+
+  @Get('event/:id/tickets')
+  @ApiOperation({
+    summary: 'Get event tickets',
+  })
+  async getEventTickets(@Req() req: FastifyRequest, @Param('id') id: string) {
+    return this.organizerService.getEventTickets(
+      req.user as unknown as CustomerJwtUserData,
+      id
+    )
+  }
+
+  @Put('event/:id/ticket/:ticketId')
+  @ApiOperation({
+    summary: 'Update an event ticket to new, not exist or not for sale',
+  })
+  async updateEventTicket(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Param('ticketId') ticketId: string,
+    @Body() dto: UpdateEventTicketDto
+  ) {
+    return this.organizerService.updateEventTicket(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      ticketId,
+      dto
     )
   }
 }
