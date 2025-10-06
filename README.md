@@ -24,3 +24,7 @@ pm2 startOrReload deploy/pm2/dev.json
 ### Start service using node
 
 NODE_ENV=production node dist/src/main.js
+
+### Start service local
+
+pnpm run dev
