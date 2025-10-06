@@ -50,3 +50,5 @@ lerna-debug.log*
 /src/generated
 
 .nestjs_repl_history
+/data
+docker-compose.yml
