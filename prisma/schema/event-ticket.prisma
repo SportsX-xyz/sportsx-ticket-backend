@@ -12,13 +12,16 @@ model EventTicket {
   price         Decimal            @db.Decimal(18, 6)
   saleStartTime DateTime
   saleEndTime   DateTime
+  resaleTimes   Int                @default(0)
   status        TicketStatus       @default(NEW)
   nftTokenId    String?            @db.VarChar(255)
   ownerId       String?
   owner         Customer?          @relation(fields: [ownerId], references: [id])
   createdAt     DateTime           @default(now()) @db.Timestamptz
   updatedAt     DateTime           @updatedAt @db.Timestamptz
-  orders        EventTicketOrder[] // 一对多关联
+  orders        EventTicketOrder[] @relation(name: "TicketOrders")
+  lastOrderId   String?            @unique
+  lastOrder     EventTicketOrder?  @relation(fields: [lastOrderId], references: [id], name: "TicketLastOrder")
 }
 
 enum TicketStatus {

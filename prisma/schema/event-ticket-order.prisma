@@ -1,14 +1,16 @@
 model EventTicketOrder {
-  id        String      @id @default(uuid())
-  ticketId  String
-  ticket    EventTicket @relation(fields: [ticketId], references: [id])
-  sellerId  String?
-  seller    Customer?   @relation(fields: [sellerId], references: [id], name: "Seller")
-  buyerId   String
-  buyer     Customer    @relation(fields: [buyerId], references: [id], name: "Buyer")
-  status    OrderStatus @default(NEW)
-  createdAt DateTime    @default(now()) @db.Timestamptz
-  updatedAt DateTime    @updatedAt @db.Timestamptz
+  id            String       @id @default(uuid())
+  ticketId      String
+  ticket        EventTicket  @relation(fields: [ticketId], references: [id], name: "TicketOrders")
+  sellerId      String?
+  seller        Customer?    @relation(fields: [sellerId], references: [id], name: "Seller")
+  buyerId       String
+  buyer         Customer     @relation(fields: [buyerId], references: [id], name: "Buyer")
+  txHash        String?      @db.VarChar(255)
+  status        OrderStatus  @default(NEW)
+  createdAt     DateTime     @default(now()) @db.Timestamptz
+  updatedAt     DateTime     @updatedAt @db.Timestamptz
+  lastForTicket EventTicket? @relation(name: "TicketLastOrder")
 }
 
 enum OrderStatus {

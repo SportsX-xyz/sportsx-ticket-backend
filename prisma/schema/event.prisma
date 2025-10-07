@@ -8,6 +8,8 @@ model Event {
   stopSaleBefore    Int               @default(0) // 活动开始前停止售票的分钟数
   status            EventStatus       @default(ACTIVE)
   description       String?           @db.Text
+  resaleFeeRate     Int               @default(5)
+  maxResaleTimes    Int               @default(150)
   createdAt         DateTime          @default(now()) @db.Timestamptz
   updatedAt         DateTime          @updatedAt @db.Timestamptz
   customer          Customer          @relation(fields: [customerId], references: [id])

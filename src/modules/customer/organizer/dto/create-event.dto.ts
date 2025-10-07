@@ -72,4 +72,22 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   description?: string
+
+  @ApiProperty({ description: 'Resale Fee Rate' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.notEmpty', {
+      field: 'resaleFeeRate',
+    }),
+  })
+  @IsNumber()
+  resaleFeeRate: number
+
+  @ApiProperty({ description: 'Max Resale Times' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.notEmpty', {
+      field: 'maxResaleTimes',
+    }),
+  })
+  @IsNumber()
+  maxResaleTimes: number
 }

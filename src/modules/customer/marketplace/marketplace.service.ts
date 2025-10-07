@@ -12,11 +12,25 @@ export class MarketplaceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getEvents() {
-    const events = await this.prisma.event.findMany({
+    const events: any[] = await this.prisma.event.findMany({
       where: {
         status: EventStatus.ACTIVE,
       },
     })
+
+    // 统计每个event下有多少可售余票
+    for (let event of events) {
+      const ticketsLeft = await this.prisma.eventTicket.count({
+        where: {
+          eventId: event.id,
+          status: {
+            in: [TicketStatus.NEW, TicketStatus.RESALE],
+          },
+        },
+      })
+      event.ticketsLeft = ticketsLeft
+    }
+
     return events
   }
 

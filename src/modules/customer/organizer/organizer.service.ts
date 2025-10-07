@@ -116,6 +116,8 @@ export class OrganizerService {
       ticketReleaseTime,
       stopSaleBefore,
       description,
+      resaleFeeRate,
+      maxResaleTimes,
     } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
@@ -134,6 +136,8 @@ export class OrganizerService {
         ticketReleaseTime,
         stopSaleBefore,
         description,
+        resaleFeeRate,
+        maxResaleTimes,
         customer: {
           connect: {
             id: customerId,

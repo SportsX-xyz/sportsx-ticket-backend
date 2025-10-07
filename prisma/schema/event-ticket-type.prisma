@@ -9,7 +9,7 @@ model EventTicketType {
   initStatus  TicketTypeStatus @default(NEW)
   createdAt   DateTime         @default(now()) @db.Timestamptz
   updatedAt   DateTime         @updatedAt @db.Timestamptz
-  tickets     EventTicket[] // 一对多关联
+  tickets     EventTicket[]
 }
 
 enum TicketTypeStatus {
