@@ -7,5 +7,6 @@ import { CustomerAuthModule } from '../auth/auth.module'
   controllers: [OrganizerController],
   providers: [OrganizerService],
   imports: [CustomerAuthModule],
+  exports: [OrganizerService],
 })
 export class OrganizerModule {}

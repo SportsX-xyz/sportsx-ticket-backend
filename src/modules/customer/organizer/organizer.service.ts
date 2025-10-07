@@ -45,7 +45,9 @@ export class OrganizerService {
       throw new ApiException(ERROR_CUSTOMER_NOT_ACTIVE)
     }
   }
-  async isOrganizer(user: CustomerJwtUserData) {
+  async isOrganizer(
+    user: CustomerJwtUserData
+  ): Promise<{ isOrganizer: boolean }> {
     const { customerId, walletId } = user
     const customer = await this.prisma.customer.findUnique({
       where: {

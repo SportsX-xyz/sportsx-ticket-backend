@@ -14,6 +14,8 @@ import {
 } from '../../../constants/error-code'
 import { CustomerJwtUserData } from '../../../types'
 import { Customer, CustomerStatus } from '@prisma/client'
+import { OrganizerService } from '../organizer/organizer.service'
+import { StaffService } from '../staff/staff.service'
 @Injectable()
 export class UserService {
   private readonly privyClient: PrivyClient
@@ -22,7 +24,9 @@ export class UserService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     @Inject(CUSTOMER_JWT_SERVICE)
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly organizerService: OrganizerService,
+    private readonly staffService: StaffService
   ) {
     const appId = this.configService.get('PRIVY_APP_ID')
     const appSecret = this.configService.get('PRIVY_APP_SECRET')
@@ -153,12 +157,17 @@ export class UserService {
     })
     this.assertValidCustomer(customer)
 
+    const { isOrganizer } = await this.organizerService.isOrganizer(user)
+    const { isStaff } = await this.staffService.isStaff(user)
+
     return {
       id: customer.id,
       email: customer.email,
       walletId: customer.walletId,
       avatarUrl: customer.avatarUrl,
       createdAt: customer.createdAt,
+      isOrganizer,
+      isStaff,
     }
   }
 }
