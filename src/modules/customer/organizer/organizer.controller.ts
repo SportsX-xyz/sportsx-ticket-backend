@@ -15,7 +15,8 @@ import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { AddEventStaffDto } from './dto/add-event-staff'
 import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
-import { UpdateEventTicketDto } from './dto/update-event-ticket.dot'
+import { UpdateEventTicketDto } from './dto/update-event-ticket.dto'
+import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets-dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('organizer')
@@ -147,6 +148,22 @@ export class OrganizerController {
       req.user as unknown as CustomerJwtUserData,
       id,
       staffId
+    )
+  }
+
+  @Post('event/:id/ticket-type-with-tickets')
+  @ApiOperation({
+    summary: 'Add event ticket type with tickets',
+  })
+  async addEventTicketTypeWithTickets(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Body() dto: AddEventTicketTypeWithTicketsDto
+  ) {
+    return this.organizerService.addEventTicketTypeWithTickets(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      dto
     )
   }
 

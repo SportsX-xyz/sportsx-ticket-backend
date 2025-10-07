@@ -28,7 +28,8 @@ import { UpdateEventDto } from './dto/update-event.dto'
 import { AddEventStaffDto } from './dto/add-event-staff'
 import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
 import { delay } from '../../../utils'
-import { UpdateEventTicketDto } from './dto/update-event-ticket.dot'
+import { UpdateEventTicketDto } from './dto/update-event-ticket.dto'
+import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets-dto'
 
 @Injectable()
 export class OrganizerService {
@@ -157,7 +158,7 @@ export class OrganizerService {
 
     this.assertValidOrganizer(customer)
 
-    return this.prisma.event.findMany({
+    const events = this.prisma.event.findMany({
       where: {
         customerId,
         status: {
@@ -168,6 +169,8 @@ export class OrganizerService {
         startTime: 'desc',
       },
     })
+
+    return events
   }
 
   async getEvent(user: CustomerJwtUserData, eventId: string) {
@@ -388,6 +391,84 @@ export class OrganizerService {
     })
   }
 
+  async addEventTicketTypeWithTickets(
+    user: CustomerJwtUserData,
+    eventId: string,
+    dto: AddEventTicketTypeWithTicketsDto
+  ) {
+    const { customerId, walletId } = user
+    const { tierName, tierPrice, tickets } = dto
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+
+    this.assertValidOrganizer(customer)
+
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
+    }
+
+    if (event.customerId !== customerId) {
+      throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    let eventTicketType = await this.prisma.eventTicketType.create({
+      data: {
+        event: {
+          connect: {
+            id: eventId,
+          },
+        },
+        tierName,
+        tierPrice,
+        initStatus: TicketTypeStatus.NEW,
+      },
+    })
+
+    for (let ticket of tickets) {
+      await this.prisma.eventTicket.create({
+        data: {
+          event: {
+            connect: {
+              id: eventId,
+            },
+          },
+          ticketType: {
+            connect: {
+              id: eventTicketType.id,
+            },
+          },
+          rowNumber: ticket.rowNumber,
+          columnNumber: ticket.columnNumber,
+          name: ticket.name,
+          initialPrice: ticket.price,
+          previousPrice: ticket.price,
+          price: ticket.price,
+
+          // 基于放票时间
+          saleStartTime: event.ticketReleaseTime,
+
+          // 用活动结束时间减去活动结束前多少分钟停止放票
+          saleEndTime: new Date(
+            event.endTime.getTime() - event.stopSaleBefore * 60000
+          ),
+          status: ticket.status,
+        },
+      })
+      await delay(10)
+    }
+
+    return eventTicketType
+  }
+
   async addEventTicketType(
     user: CustomerJwtUserData,
     eventId: string,
@@ -417,7 +498,7 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
-    const eventTicketType = await this.prisma.eventTicketType.create({
+    let eventTicketType = await this.prisma.eventTicketType.create({
       data: {
         event: {
           connect: {
@@ -468,6 +549,16 @@ export class OrganizerService {
       }
     }
 
+    // 更新 initStatus
+    eventTicketType = await this.prisma.eventTicketType.update({
+      where: {
+        id: eventTicketType.id,
+      },
+      data: {
+        initStatus: TicketTypeStatus.DONE,
+      },
+    })
+
     return eventTicketType
   }
 
@@ -495,11 +586,41 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
-    return this.prisma.eventTicketType.findMany({
+    const eventTicketTypes: any[] = await this.prisma.eventTicketType.findMany({
       where: {
         eventId,
       },
     })
+
+    // 统计每种类型的总票数和已售票数
+    for (let eventTicketType of eventTicketTypes) {
+      const totalTickets = await this.prisma.eventTicket.count({
+        where: {
+          ticketTypeId: eventTicketType.id,
+          status: {
+            in: [
+              TicketStatus.NEW,
+              TicketStatus.SOLD,
+              TicketStatus.NOT_FOR_SALE,
+              TicketStatus.RESALE,
+              TicketStatus.USED,
+            ],
+          },
+        },
+      })
+      const soldTickets = await this.prisma.eventTicket.count({
+        where: {
+          ticketTypeId: eventTicketType.id,
+          status: {
+            in: [TicketStatus.SOLD, TicketStatus.USED, TicketStatus.RESALE],
+          },
+        },
+      })
+      eventTicketType.totalTickets = totalTickets
+      eventTicketType.soldTickets = soldTickets
+    }
+
+    return eventTicketTypes
   }
 
   async removeEventTicketType(
@@ -619,7 +740,7 @@ export class OrganizerService {
     dto: UpdateEventTicketDto
   ) {
     const { customerId, walletId } = user
-    const { status } = dto
+    const { status, name } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -678,6 +799,7 @@ export class OrganizerService {
       },
       data: {
         status: dto.status,
+        name: name || eventTicket.name,
       },
     })
   }

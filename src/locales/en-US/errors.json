@@ -14,6 +14,7 @@
   "event.staff.already.exists": "Event staff already exists",
   "event.ticket.type.has.tickets": "Event ticket type has tickets",
   "event.active": "Event active",
+  "event.not.active": "Event not active",
   "event.ticket.type.not.found": "Event ticket type not found",
   "event.ticket.not.found": "Event ticket not found",
   "event.ticket.status.not.allowed.update": "Event ticket status not allowed update"

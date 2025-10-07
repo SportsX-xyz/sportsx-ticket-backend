@@ -4,8 +4,8 @@ model EventTicketType {
   event       Event            @relation(fields: [eventId], references: [id])
   tierName    String           @db.VarChar(100)
   tierPrice   Decimal          @db.Decimal(18, 6)
-  tierRows    Int
-  tierColumns Int
+  tierRows    Int?
+  tierColumns Int?
   initStatus  TicketTypeStatus @default(NEW)
   createdAt   DateTime         @default(now()) @db.Timestamptz
   updatedAt   DateTime         @updatedAt @db.Timestamptz
