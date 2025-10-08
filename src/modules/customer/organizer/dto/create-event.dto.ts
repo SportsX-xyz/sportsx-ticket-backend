@@ -5,6 +5,7 @@ import {
   IsDate,
   IsNumber,
   IsOptional,
+  Min,
 } from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
 import { Type } from 'class-transformer'
@@ -80,6 +81,12 @@ export class CreateEventDto {
     }),
   })
   @IsNumber()
+  @Min(1, {
+    message: i18nValidationMessage('validation.min', {
+      field: 'resaleFeeRate',
+      min: 1,
+    }),
+  })
   resaleFeeRate: number
 
   @ApiProperty({ description: 'Max Resale Times' })
@@ -89,5 +96,11 @@ export class CreateEventDto {
     }),
   })
   @IsNumber()
+  @Min(1, {
+    message: i18nValidationMessage('validation.min', {
+      field: 'maxResaleTimes',
+      min: 1,
+    }),
+  })
   maxResaleTimes: number
 }

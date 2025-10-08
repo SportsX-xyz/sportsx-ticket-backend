@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumber } from 'class-validator'
+import { IsNotEmpty, IsNumber, Min } from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
 
 export class SettingsDto {
@@ -10,6 +10,12 @@ export class SettingsDto {
     }),
   })
   @IsNumber()
+  @Min(1, {
+    message: i18nValidationMessage('validation.min', {
+      field: 'resaleFeeRate',
+      min: 1,
+    }),
+  })
   resaleFeeRate: number
 
   @ApiProperty({ description: 'Max Resale Times' })
@@ -19,5 +25,11 @@ export class SettingsDto {
     }),
   })
   @IsNumber()
+  @Min(1, {
+    message: i18nValidationMessage('validation.min', {
+      field: 'maxResaleTimes',
+      min: 1,
+    }),
+  })
   maxResaleTimes: number
 }
