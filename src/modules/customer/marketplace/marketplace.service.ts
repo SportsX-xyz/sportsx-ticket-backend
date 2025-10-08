@@ -5,6 +5,7 @@ import { ApiException } from '@/exceptions/api.exception'
 import {
   ERROR_EVENT_NOT_ACTIVE,
   ERROR_EVENT_NOT_FOUND,
+  ERROR_EVENT_STOP_SALE,
 } from '@/constants/error-code'
 
 @Injectable()
@@ -99,6 +100,15 @@ export class MarketplaceService {
     if (event.status !== EventStatus.ACTIVE) {
       throw new ApiException(ERROR_EVENT_NOT_ACTIVE)
     }
+
+    // 判断是否已经停止售票
+    // if (
+    //   new Date(event.endTime.getTime() - event.stopSaleBefore * 60 * 1000) <
+    //   new Date()
+    // ) {
+    //   throw new ApiException(ERROR_EVENT_STOP_SALE)
+    // }
+
     const eventTickets = await this.prisma.eventTicket.findMany({
       where: {
         eventId,

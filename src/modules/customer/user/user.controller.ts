@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req } from '@nestjs/common'
+import { Controller, Get, Param, Post, Req } from '@nestjs/common'
 import { UseGuards } from '@nestjs/common'
 import { CustomerAuthGuard } from '../core/guards/customer-auth.guard'
 import { Public } from '../core/decorators'
@@ -12,6 +12,7 @@ import { PrivyDto } from './dto/privy.dto'
 import { UserService } from './user.service'
 import { ApiTags } from '@nestjs/swagger'
 import { CustomerJwtUserData } from '../../../types'
+import { ResaleDto } from './dto/resale.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('customer')
@@ -53,5 +54,82 @@ export class UserController {
   })
   async me(@Req() req: FastifyRequest) {
     return this.userService.me(req.user as unknown as CustomerJwtUserData)
+  }
+
+  @Get('tickets')
+  @ApiOperation({
+    summary: 'Get current user tickets',
+  })
+  async tickets(@Req() req: FastifyRequest) {
+    return this.userService.tickets(req.user as unknown as CustomerJwtUserData)
+  }
+
+  @Post('resale/:ticketId')
+  @ApiOperation({
+    summary: 'Resale ticket',
+  })
+  async resale(
+    @Req() req: FastifyRequest,
+    @Param('ticketId') ticketId: string,
+    @Body() dto: ResaleDto
+  ) {
+    return this.userService.resale(
+      req.user as unknown as CustomerJwtUserData,
+      ticketId,
+      dto
+    )
+  }
+
+  @Get('resales')
+  @ApiOperation({
+    summary: 'Get current user resales',
+  })
+  async resales(@Req() req: FastifyRequest) {
+    return this.userService.resales(req.user as unknown as CustomerJwtUserData)
+  }
+
+  @Post('checkout-ticket/:ticketId')
+  @ApiOperation({
+    summary: 'Checkout ticket',
+  })
+  async checkoutTicket(
+    @Req() req: FastifyRequest,
+    @Param('ticketId') ticketId: string
+  ) {
+    return this.userService.checkoutTicket(
+      req.user as unknown as CustomerJwtUserData,
+      ticketId
+    )
+  }
+
+  @Get('orders/buyer')
+  @ApiOperation({
+    summary: 'Get current user orders as buyer',
+  })
+  async ordersBuyer(@Req() req: FastifyRequest) {
+    return this.userService.ordersBuyer(
+      req.user as unknown as CustomerJwtUserData
+    )
+  }
+
+  @Get('orders/seller')
+  @ApiOperation({
+    summary: 'Get current user orders as seller',
+  })
+  async ordersSeller(@Req() req: FastifyRequest) {
+    return this.userService.ordersSeller(
+      req.user as unknown as CustomerJwtUserData
+    )
+  }
+
+  @Post('pay/:orderId')
+  @ApiOperation({
+    summary: 'Pay order',
+  })
+  async pay(@Req() req: FastifyRequest, @Param('orderId') orderId: string) {
+    return this.userService.pay(
+      req.user as unknown as CustomerJwtUserData,
+      orderId
+    )
   }
 }

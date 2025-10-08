@@ -19,7 +19,11 @@ export const ERROR_EVENT_ACTIVE = 22005
 export const ERROR_EVENT_NOT_ACTIVE = 22006
 export const ERROR_EVENT_TICKET_TYPE_NOT_FOUND = 22007
 export const ERROR_EVENT_TICKET_NOT_FOUND = 22008
-export const ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE = 22009
+export const ERROR_EVENT_TICKET_NOT_READY_FOR_SALE = 22009
+export const ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE = 22010
+export const ERROR_EVENT_STOP_SALE = 22011
+export const ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER = 22012
+export const ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE = 22013
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -46,6 +50,12 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_NOT_ACTIVE]: 'event.not.active',
   [ERROR_EVENT_TICKET_TYPE_NOT_FOUND]: 'event.ticket.type.not.found',
   [ERROR_EVENT_TICKET_NOT_FOUND]: 'event.ticket.not.found',
+  [ERROR_EVENT_TICKET_NOT_READY_FOR_SALE]: 'event.ticket.not.ready.for.sale',
   [ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE]:
     'event.ticket.status.not.allowed.update',
+  [ERROR_EVENT_STOP_SALE]: 'event.stop.sale',
+  [ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER]:
+    'event.ticket.not.owned.by.customer',
+  [ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE]:
+    'event.ticket.not.ready.for.resale',
 }

@@ -10,12 +10,25 @@ import { ApiException } from '../../../exceptions/api.exception'
 import {
   ERROR_CUSTOMER_NOT_ACTIVE,
   ERROR_CUSTOMER_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER,
+  ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE,
+  ERROR_EVENT_TICKET_NOT_READY_FOR_SALE,
   ERROR_PRIVY_LOGIN_FAILED,
 } from '../../../constants/error-code'
 import { CustomerJwtUserData } from '../../../types'
-import { Customer, CustomerStatus } from '@prisma/client'
+import {
+  Customer,
+  CustomerStatus,
+  EventStatus,
+  OrderStatus,
+  TicketStatus,
+} from '@prisma/client'
 import { OrganizerService } from '../organizer/organizer.service'
 import { StaffService } from '../staff/staff.service'
+import { Prisma } from '@prisma/client'
+import { ResaleDto } from './dto/resale.dto'
+
 @Injectable()
 export class UserService {
   private readonly privyClient: PrivyClient
@@ -169,5 +182,224 @@ export class UserService {
       isOrganizer,
       isStaff,
     }
+  }
+
+  async tickets(user: CustomerJwtUserData) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+
+    return this.prisma.eventTicket.findMany({
+      select: {
+        id: true,
+        event: true,
+        ticketType: true,
+        name: true,
+        status: true,
+        price: true,
+      },
+      where: {
+        ownerId: customer.id,
+        status: TicketStatus.SOLD,
+      },
+    })
+  }
+
+  async resales(user: CustomerJwtUserData) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+
+    const tickets = await this.prisma.$queryRaw`
+    SELECT
+      t.id,
+      t.name,
+      t.status,
+      t."price",
+      json_build_object(
+        'id', e.id,
+        'name', e.name,
+        'address', e.address,
+        'description', e.description,
+        'endTime', e."endTime",
+        'stopSaleBefore', e."stopSaleBefore"
+      ) AS event,
+      json_build_object(
+        'id', tt.id,
+        'tierName', tt."tierName"
+      ) AS "ticketType"
+    FROM "EventTicket" t
+    INNER JOIN "Event" e ON t."eventId" = e.id
+    INNER JOIN "EventTicketType" tt ON t."ticketTypeId" = tt.id
+    WHERE
+      t."ownerId" = ${customerId}
+      AND t.status = ${TicketStatus.RESALE}::"TicketStatus"
+      -- AND NOW() < (e."endTime" - INTERVAL '1 minute' * e."stopSaleBefore")
+  `
+
+    return tickets
+  }
+
+  async checkoutTicket(user: CustomerJwtUserData, ticketId: string) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    if (
+      ![TicketStatus.NEW, TicketStatus.RESALE].includes(ticket.status as any)
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_READY_FOR_SALE)
+    }
+
+    // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
+
+    // TODO: 应该使用事务的方式
+
+    await this.prisma.eventTicket.update({
+      where: {
+        id: ticket.id,
+      },
+      data: {
+        status: TicketStatus.LOCK,
+      },
+    })
+
+    const order = await this.prisma.eventTicketOrder.create({
+      data: {
+        ticketId: ticket.id,
+        buyerId: customer.id,
+        sellerId: ticket.ownerId || null,
+        price: ticket.price,
+      },
+    })
+
+    return order
+  }
+
+  async resale(user: CustomerJwtUserData, ticketId: string, dto: ResaleDto) {
+    const { customerId } = user
+    const { price } = dto
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    if (ticket.ownerId !== customer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER)
+    }
+    if (
+      ![TicketStatus.SOLD, TicketStatus.RESALE].includes(ticket.status as any)
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE)
+    }
+
+    const updatedTicket = await this.prisma.eventTicket.update({
+      where: {
+        id: ticket.id,
+      },
+      data: {
+        status: TicketStatus.RESALE,
+        previousPrice: ticket.price,
+        price,
+      },
+    })
+
+    return updatedTicket
+  }
+
+  async ordersBuyer(user: CustomerJwtUserData) {
+    return this.orders(user, 'buyer')
+  }
+
+  async ordersSeller(user: CustomerJwtUserData) {
+    return this.orders(user, 'seller')
+  }
+
+  async orders(user: CustomerJwtUserData, type: 'buyer' | 'seller') {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+
+    return this.prisma.eventTicketOrder.findMany({
+      where: {
+        [type === 'buyer' ? 'buyerId' : 'sellerId']: customer.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
+
+  async pay(user: CustomerJwtUserData, orderId: string) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const order = await this.prisma.eventTicketOrder.findUnique({
+      where: {
+        id: orderId,
+      },
+    })
+
+    // TODO: 支付业务逻辑
+
+    // 修改订单状态
+    let updatedOrder = await this.prisma.eventTicketOrder.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.PAID,
+      },
+    })
+
+    // 修改订单状态 TO TRANSFERED
+    updatedOrder = await this.prisma.eventTicketOrder.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.TRANSFERED,
+      },
+    })
+
+    // TODO: 更新ticket，的ownerId, lastOrderId
+    // TODO: 计算分账？
+    return updatedOrder
   }
 }

@@ -17,5 +17,9 @@
   "event.not.active": "Event not active",
   "event.ticket.type.not.found": "Event ticket type not found",
   "event.ticket.not.found": "Event ticket not found",
-  "event.ticket.status.not.allowed.update": "Event ticket status not allowed update"
+  "event.ticket.not.ready.for.sale": "Event ticket not ready for sale",
+  "event.ticket.status.not.allowed.update": "Event ticket status not allowed update",
+  "event.stop.sale": "Event stop sale",
+  "event.ticket.not.owned.by.customer": "Event ticket not owned by customer",
+  "event.ticket.not.ready.for.resale": "Event ticket not ready for resale"
 }
