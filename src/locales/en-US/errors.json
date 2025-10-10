@@ -9,6 +9,7 @@
   "customer.not.organizer": "Customer not organizer",
   "customer.not.active": "Customer not active",
   "customer.not.admin": "Customer not admin",
+  "customer.already.exists": "Customer already exists",
 
   "event.not.found": "Event not found",
   "event.not.belong.to.you": "Event not belong to you",

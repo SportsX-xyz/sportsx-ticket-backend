@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Put, Query, Req } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common'
 import { UseGuards } from '@nestjs/common'
 import { CustomerAuthGuard } from '../core/guards/customer-auth.guard'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
@@ -7,6 +16,7 @@ import { FastifyRequest } from 'fastify'
 import { CustomerJwtUserData } from '../../../types'
 import { CustomerListDto } from './dto/customer-list.dto'
 import { UpdateCustomerDto } from './dto/update-customer.dto'
+import { CreateCustomerDto } from './dto/create-customer.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('manage')
@@ -45,6 +55,20 @@ export class ManageController {
     return this.manageService.updateCustomer(
       req.user as unknown as CustomerJwtUserData,
       customerId,
+      dto
+    )
+  }
+
+  @Post('customers')
+  @ApiOperation({
+    summary: 'Create customer',
+  })
+  async createCustomer(
+    @Req() req: FastifyRequest,
+    @Body() dto: CreateCustomerDto
+  ) {
+    return this.manageService.createCustomer(
+      req.user as unknown as CustomerJwtUserData,
       dto
     )
   }

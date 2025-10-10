@@ -10,6 +10,7 @@ export const ERROR_CUSTOMER_NOT_FOUND = 21001
 export const ERROR_CUSTOMER_NOT_ORGANIZER = 21002
 export const ERROR_CUSTOMER_NOT_ACTIVE = 21003
 export const ERROR_CUSTOMER_NOT_ADMIN = 21004
+export const ERROR_CUSTOMER_ALREADY_EXISTS = 21005
 
 // Event
 export const ERROR_EVENT_NOT_FOUND = 22001
@@ -42,6 +43,7 @@ export const ErrorCodeMap = {
   [ERROR_CUSTOMER_NOT_ORGANIZER]: 'customer.not.organizer',
   [ERROR_CUSTOMER_NOT_ACTIVE]: 'customer.not.active',
   [ERROR_CUSTOMER_NOT_ADMIN]: 'customer.not.admin',
+  [ERROR_CUSTOMER_ALREADY_EXISTS]: 'customer.already.exists',
 
   // Event
   [ERROR_EVENT_NOT_FOUND]: 'event.not.found',
