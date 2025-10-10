@@ -103,4 +103,9 @@ export class CreateEventDto {
     }),
   })
   maxResaleTimes: number
+
+  @ApiProperty({ description: 'IPFS URI' })
+  @IsString()
+  @IsOptional()
+  ipfsUri?: string
 }

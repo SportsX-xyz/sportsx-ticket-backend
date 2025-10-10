@@ -6,6 +6,7 @@ import { OrganizerModule } from '@/modules/customer/organizer/organizer.module'
 import { AppModule } from './app.module'
 import { MarketplaceModule } from '@/modules/customer/marketplace/marketplace.module'
 import { StaffModule } from './modules/customer/staff/staff.module'
+import { ManageModule } from './modules/customer/manage/manage.module'
 // Create an empty module
 @Module({})
 class EmptyModule {}
@@ -36,6 +37,7 @@ export const registerBusinessSwagger = (app: NestFastifyApplication) => {
       OrganizerModule,
       MarketplaceModule,
       StaffModule,
+      ManageModule,
     ],
   })
   SwaggerModule.setup('api-doc', app, document)

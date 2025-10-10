@@ -38,11 +38,11 @@ export class OrganizerService {
     if (!customer) {
       throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
     }
-    if (!customer.isOrganizer) {
-      throw new ApiException(ERROR_CUSTOMER_NOT_ORGANIZER)
-    }
     if (customer.status !== CustomerStatus.ACTIVE) {
       throw new ApiException(ERROR_CUSTOMER_NOT_ACTIVE)
+    }
+    if (!customer.isOrganizer) {
+      throw new ApiException(ERROR_CUSTOMER_NOT_ORGANIZER)
     }
   }
   async isOrganizer(
@@ -120,6 +120,7 @@ export class OrganizerService {
       description,
       resaleFeeRate,
       maxResaleTimes,
+      ipfsUri,
     } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
@@ -140,6 +141,7 @@ export class OrganizerService {
         description,
         resaleFeeRate,
         maxResaleTimes,
+        ipfsUri: ipfsUri || null,
         customer: {
           connect: {
             id: customerId,
@@ -238,7 +240,9 @@ export class OrganizerService {
       where: {
         id: eventId,
       },
-      data: dto,
+      data: {
+        ...dto,
+      },
     })
   }
 

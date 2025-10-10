@@ -6,7 +6,7 @@ model Event {
   endTime           DateTime          @db.Timestamptz
   ticketReleaseTime DateTime          @db.Timestamptz
   stopSaleBefore    Int               @default(0) // 活动开始前停止售票的分钟数
-  status            EventStatus       @default(ACTIVE)
+  status            EventStatus       @default(DRAFT)
   description       String?           @db.Text
   resaleFeeRate     Int               @default(5)
   maxResaleTimes    Int               @default(150)
@@ -14,12 +14,15 @@ model Event {
   updatedAt         DateTime          @updatedAt @db.Timestamptz
   customer          Customer          @relation(fields: [customerId], references: [id])
   customerId        String
+  ipfsUri           String?           @db.VarChar(255)
   tickets           EventTicket[] // 一对多关联
   ticketTypes       EventTicketType[] // 一对多关联
   staff             EventStaff[] // 新增：与 EventStaff 的关系
 }
 
 enum EventStatus {
+  DRAFT
+  PREVIEW
   ACTIVE
   INACTIVE
   DISABLED

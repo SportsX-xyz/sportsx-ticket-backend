@@ -28,6 +28,7 @@ import { OrganizerService } from '../organizer/organizer.service'
 import { StaffService } from '../staff/staff.service'
 import { Prisma } from '@prisma/client'
 import { ResaleDto } from './dto/resale.dto'
+import { ManageService } from '../manage/manage.service'
 
 @Injectable()
 export class UserService {
@@ -39,7 +40,8 @@ export class UserService {
     @Inject(CUSTOMER_JWT_SERVICE)
     private readonly jwtService: JwtService,
     private readonly organizerService: OrganizerService,
-    private readonly staffService: StaffService
+    private readonly staffService: StaffService,
+    private readonly manageService: ManageService
   ) {
     const appId = this.configService.get('PRIVY_APP_ID')
     const appSecret = this.configService.get('PRIVY_APP_SECRET')
@@ -172,6 +174,7 @@ export class UserService {
 
     const { isOrganizer } = await this.organizerService.isOrganizer(user)
     const { isStaff } = await this.staffService.isStaff(user)
+    const { isAdmin } = await this.manageService.isAdmin(user)
 
     return {
       id: customer.id,
@@ -181,6 +184,7 @@ export class UserService {
       createdAt: customer.createdAt,
       isOrganizer,
       isStaff,
+      isAdmin,
     }
   }
 

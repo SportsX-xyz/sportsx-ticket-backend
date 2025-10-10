@@ -1,6 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger'
 import { CreateEventDto } from './create-event.dto'
-import { IsNotEmpty, IsString } from 'class-validator'
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
 import { EventStatus } from '@prisma/client'
 
@@ -8,7 +8,7 @@ export class UpdateEventDto extends PartialType(CreateEventDto) {
   @ApiProperty({ description: 'Event Status' })
   @ApiProperty({
     description: 'status',
-    enum: ['ACTIVE', 'INACTIVE'],
+    enum: ['DRAFT', 'PREVIEW', 'ACTIVE', 'INACTIVE'],
     required: false,
   })
   @IsNotEmpty({
@@ -18,4 +18,9 @@ export class UpdateEventDto extends PartialType(CreateEventDto) {
   })
   @IsString()
   status?: EventStatus
+
+  // @ApiProperty({ description: 'IPFS URI' })
+  // @IsString()
+  // @IsOptional()
+  // ipfsUri?: string
 }

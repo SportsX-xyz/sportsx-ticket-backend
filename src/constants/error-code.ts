@@ -9,6 +9,7 @@ export const ERROR_PRIVY_LOGIN_FAILED = 20002
 export const ERROR_CUSTOMER_NOT_FOUND = 21001
 export const ERROR_CUSTOMER_NOT_ORGANIZER = 21002
 export const ERROR_CUSTOMER_NOT_ACTIVE = 21003
+export const ERROR_CUSTOMER_NOT_ADMIN = 21004
 
 // Event
 export const ERROR_EVENT_NOT_FOUND = 22001
@@ -40,6 +41,7 @@ export const ErrorCodeMap = {
   [ERROR_CUSTOMER_NOT_FOUND]: 'customer.not.found',
   [ERROR_CUSTOMER_NOT_ORGANIZER]: 'customer.not.organizer',
   [ERROR_CUSTOMER_NOT_ACTIVE]: 'customer.not.active',
+  [ERROR_CUSTOMER_NOT_ADMIN]: 'customer.not.admin',
 
   // Event
   [ERROR_EVENT_NOT_FOUND]: 'event.not.found',
