@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import {
+  IsDecimal,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
 
 export class UpdateEventTicketDto {
@@ -27,4 +34,19 @@ export class UpdateEventTicketDto {
   @IsString()
   @IsOptional()
   name?: string
+
+  @ApiProperty({ description: 'Ticket Price' })
+  @IsNumber()
+  @IsOptional()
+  @IsPositive() // 如果价格不能为负数
+  @IsDecimal({
+    decimal_digits: '0,6', // 允许0到6位小数
+    force_decimal: false, // 允许整数
+  })
+  price?: number
+
+  @ApiProperty({ description: 'Ticket Type Id' })
+  @IsString()
+  @IsOptional()
+  ticketTypeId?: string
 }

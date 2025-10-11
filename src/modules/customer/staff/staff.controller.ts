@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common'
 import { UseGuards } from '@nestjs/common'
 import { CustomerAuthGuard } from '../core/guards/customer-auth.guard'
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger'
@@ -6,6 +6,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { StaffService } from './staff.service'
 import { FastifyRequest } from 'fastify'
 import { CustomerJwtUserData } from '../../../types'
+import { CheckinDto } from './dto/checkin.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('staff')
@@ -20,5 +21,29 @@ export class StaffController {
   })
   async isStaff(@Req() req: FastifyRequest) {
     return this.staffService.isStaff(req.user as unknown as CustomerJwtUserData)
+  }
+
+  @Get('events')
+  @ApiOperation({
+    summary: 'Get events as staff',
+  })
+  async events(@Req() req: FastifyRequest) {
+    return this.staffService.events(req.user as unknown as CustomerJwtUserData)
+  }
+
+  @Post('check-in/:eventId')
+  @ApiOperation({
+    summary: 'Check in',
+  })
+  async checkIn(
+    @Req() req: FastifyRequest,
+    @Param() param: { eventId: string },
+    @Body() dto: CheckinDto
+  ) {
+    return this.staffService.checkIn(
+      req.user as unknown as CustomerJwtUserData,
+      param.eventId,
+      dto
+    )
   }
 }

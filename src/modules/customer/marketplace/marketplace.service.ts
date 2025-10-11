@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../shared/prisma/prisma.service'
-import { EventStatus, TicketStatus } from '@prisma/client'
+import { EventStatus, Event, TicketStatus } from '@prisma/client'
 import { ApiException } from '@/exceptions/api.exception'
 import {
   ERROR_EVENT_NOT_ACTIVE,
@@ -15,7 +15,9 @@ export class MarketplaceService {
   async getEvents() {
     const events: any[] = await this.prisma.event.findMany({
       where: {
-        status: EventStatus.ACTIVE,
+        status: {
+          in: [EventStatus.ACTIVE, EventStatus.PREVIEW],
+        },
       },
     })
 
@@ -30,9 +32,44 @@ export class MarketplaceService {
         },
       })
       event.ticketsLeft = ticketsLeft
+
+      // 给每个event添加一个stage的计算属性
+      // stage包括：DRAFT, PREVIEW, ONSALE, LIVE, ENDED
+      event.stage = this.getEventStage(event)
     }
 
     return events
+  }
+
+  getEventStage(event: Event) {
+    if (event.status === EventStatus.PREVIEW) {
+      return 'PREVIEW'
+    } else if (event.status === EventStatus.DRAFT) {
+      return 'DRAFT'
+    } else if (event.status === EventStatus.DISABLED) {
+      return 'DISABLED'
+    } else {
+      // 判断时间，小于ticketReleaseTime，返回PREVIEW
+      if (new Date() < event.ticketReleaseTime) {
+        return 'PREVIEW'
+      }
+      // 判断时间，小于event.startTime，大于 releaseTime，返回ONSALE
+      else if (
+        new Date() < event.startTime &&
+        new Date() >= event.ticketReleaseTime
+      ) {
+        return 'ONSALE'
+      }
+
+      // 判断时间处于event.startTime和event.endTime之间，返回ONSALE
+      else if (new Date() >= event.startTime && new Date() < event.endTime) {
+        return 'LIVE'
+      }
+      // 判断时间，超过event.endTime，返回ENDED
+      else if (new Date() >= event.endTime) {
+        return 'ENDED'
+      }
+    }
   }
 
   async getEventTicketTypes(eventId: string) {
@@ -101,13 +138,13 @@ export class MarketplaceService {
       throw new ApiException(ERROR_EVENT_NOT_ACTIVE)
     }
 
-    // 判断是否已经停止售票
-    // if (
-    //   new Date(event.endTime.getTime() - event.stopSaleBefore * 60 * 1000) <
-    //   new Date()
-    // ) {
-    //   throw new ApiException(ERROR_EVENT_STOP_SALE)
-    // }
+    //判断是否已经停止售票
+    if (
+      new Date(event.endTime.getTime() - event.stopSaleBefore * 60 * 1000) <
+      new Date()
+    ) {
+      throw new ApiException(ERROR_EVENT_STOP_SALE)
+    }
 
     const eventTickets = await this.prisma.eventTicket.findMany({
       where: {

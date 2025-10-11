@@ -5,11 +5,15 @@ model Event {
   startTime         DateTime          @db.Timestamptz
   endTime           DateTime          @db.Timestamptz
   ticketReleaseTime DateTime          @db.Timestamptz
+  checkInBefore     Int               @default(0) // 活动开始前多少分钟开始检票入场
   stopSaleBefore    Int               @default(0) // 活动开始前停止售票的分钟数
   status            EventStatus       @default(DRAFT)
   description       String?           @db.Text
   resaleFeeRate     Int               @default(5)
   maxResaleTimes    Int               @default(150)
+  eventAvatar       String?           @db.Text
+  coverImage        String?           @db.VarChar(255)
+  coverImageId      String?           @db.VarChar(255)
   createdAt         DateTime          @default(now()) @db.Timestamptz
   updatedAt         DateTime          @updatedAt @db.Timestamptz
   customer          Customer          @relation(fields: [customerId], references: [id])
@@ -24,6 +28,5 @@ enum EventStatus {
   DRAFT
   PREVIEW
   ACTIVE
-  INACTIVE
   DISABLED
 }

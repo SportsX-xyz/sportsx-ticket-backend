@@ -13,10 +13,12 @@ import { SettingsDto } from './dto/settings.dto'
 import { Body } from '@nestjs/common'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
-import { AddEventStaffDto } from './dto/add-event-staff'
+import { AddEventStaffDto } from './dto/add-event-staff.dto'
 import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
 import { UpdateEventTicketDto } from './dto/update-event-ticket.dto'
-import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets-dto'
+import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets.dto'
+import { PreviewEventDto } from './dto/preview-event.dto'
+import { UpdateEventTicketTypeDto } from './dto/update-event-ticket-type.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('organizer')
@@ -108,6 +110,33 @@ export class OrganizerController {
     )
   }
 
+  @Post('event/:id/preview')
+  @ApiOperation({
+    summary: 'Preview an event',
+  })
+  async previewEvent(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Body() dto: PreviewEventDto
+  ) {
+    return this.organizerService.previewEvent(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      dto
+    )
+  }
+
+  @Post('event/:id/publish')
+  @ApiOperation({
+    summary: 'Publish an event',
+  })
+  async publishEvent(@Req() req: FastifyRequest, @Param('id') id: string) {
+    return this.organizerService.publishEvent(
+      req.user as unknown as CustomerJwtUserData,
+      id
+    )
+  }
+
   @Post('event/:id/staff')
   @ApiOperation({
     summary: 'Add an event staff',
@@ -121,6 +150,17 @@ export class OrganizerController {
       req.user as unknown as CustomerJwtUserData,
       id,
       dto
+    )
+  }
+
+  @Delete('event/:id')
+  @ApiOperation({
+    summary: 'Delete an event',
+  })
+  async deleteEvent(@Req() req: FastifyRequest, @Param('id') id: string) {
+    return this.organizerService.deleteEvent(
+      req.user as unknown as CustomerJwtUserData,
+      id
     )
   }
 
@@ -194,6 +234,24 @@ export class OrganizerController {
     return this.organizerService.getEventTicketTypes(
       req.user as unknown as CustomerJwtUserData,
       id
+    )
+  }
+
+  @Put('event/:id/ticket-type/:ticketTypeId')
+  @ApiOperation({
+    summary: 'Update an event ticket type',
+  })
+  async updateEventTicketType(
+    @Req() req: FastifyRequest,
+    @Param('id') id: string,
+    @Param('ticketTypeId') ticketTypeId: string,
+    @Body() dto: UpdateEventTicketTypeDto
+  ) {
+    return this.organizerService.updateEventTicketType(
+      req.user as unknown as CustomerJwtUserData,
+      id,
+      ticketTypeId,
+      dto
     )
   }
 

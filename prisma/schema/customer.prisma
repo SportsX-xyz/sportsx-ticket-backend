@@ -11,7 +11,8 @@ model Customer {
   status           CustomerStatus     @default(ACTIVE)
   createdAt        DateTime           @default(now()) @db.Timestamptz
   updatedAt        DateTime           @updatedAt @db.Timestamptz
-  tickets          EventTicket[] // 一对多关联
+  tickets          EventTicket[]      @relation("TicketOwner") // 一对多关联
+  ticketsCheckIn   EventTicket[]      @relation("TicketCheckInStaff") // 一对多关联
   sellOrders       EventTicketOrder[] @relation("Seller") // 一对多关联
   buyOrders        EventTicketOrder[] @relation("Buyer") // 一对多关联
   staffAssignments EventStaff[]       @relation("StaffUser") // 新增：作为验票人

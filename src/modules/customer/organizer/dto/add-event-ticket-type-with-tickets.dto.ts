@@ -26,23 +26,14 @@ export class TicketItem {
 }
 
 export class AddEventTicketTypeWithTicketsDto {
-  @ApiProperty({ description: 'TierName' })
+  @ApiProperty({ description: 'TicketTypeId' })
   @IsNotEmpty({
     message: i18nValidationMessage('validation.notEmpty', {
-      field: 'tierName',
+      field: 'ticketTypeId',
     }),
   })
   @IsString()
-  tierName: string
-
-  @ApiProperty({ description: 'TierPrice' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.notEmpty', {
-      field: 'tierPrice',
-    }),
-  })
-  @IsNumber()
-  tierPrice: number
+  ticketTypeId: string
 
   @ApiProperty({ description: 'Tickets', type: [TicketItem] })
   @IsNotEmpty({

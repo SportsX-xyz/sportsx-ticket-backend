@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator'
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsPositive,
+  IsDecimal,
+} from 'class-validator'
 import { i18nValidationMessage } from 'nestjs-i18n'
 
 export class AddEventTicketTypeDto {
@@ -19,23 +25,19 @@ export class AddEventTicketTypeDto {
     }),
   })
   @IsNumber()
+  @IsPositive() // 如果价格不能为负数
+  @IsDecimal({
+    decimal_digits: '0,6', // 允许0到6位小数
+    force_decimal: false, // 允许整数
+  })
   tierPrice: number
 
-  @ApiProperty({ description: 'TierRows' })
+  @ApiProperty({ description: 'Color' })
   @IsNotEmpty({
     message: i18nValidationMessage('validation.notEmpty', {
-      field: 'tierRows',
+      field: 'color',
     }),
   })
-  @IsNumber()
-  tierRows: number
-
-  @ApiProperty({ description: 'TierColumns' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.notEmpty', {
-      field: 'tierColumns',
-    }),
-  })
-  @IsNumber()
-  tierColumns: number
+  @IsString()
+  color: string
 }

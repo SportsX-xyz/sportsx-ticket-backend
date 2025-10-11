@@ -10,6 +10,7 @@
   "customer.not.active": "Customer not active",
   "customer.not.admin": "Customer not admin",
   "customer.already.exists": "Customer already exists",
+  "customer.not.event.staff": "Customer not event staff",
 
   "event.not.found": "Event not found",
   "event.not.belong.to.you": "Event not belong to you",
@@ -23,5 +24,11 @@
   "event.ticket.status.not.allowed.update": "Event ticket status not allowed update",
   "event.stop.sale": "Event stop sale",
   "event.ticket.not.owned.by.customer": "Event ticket not owned by customer",
-  "event.ticket.not.ready.for.resale": "Event ticket not ready for resale"
+  "event.ticket.not.ready.for.resale": "Event ticket not ready for resale",
+  "event.update.not.allowed": "Event update not allowed",
+  "event.ticket.type.update.not.allowed": "Event ticket type update not allowed",
+  "event.ticket.update.not.allowed": "Event ticket update not allowed",
+  "event.ticket.type.has.sold.tickets": "Event ticket type has sold tickets",
+  "event.ended": "Event ended",
+  "event.ticket.type.not.match.event": "Event ticket type not match event"
 }

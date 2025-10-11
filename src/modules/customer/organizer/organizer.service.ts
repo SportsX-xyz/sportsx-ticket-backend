@@ -14,6 +14,10 @@ import {
   ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE,
   ERROR_EVENT_TICKET_TYPE_HAS_TICKETS,
   ERROR_EVENT_TICKET_TYPE_NOT_FOUND,
+  ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT,
+  ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED,
+  ERROR_EVENT_TICKET_UPDATE_NOT_ALLOWED,
+  ERROR_EVENT_UPDATE_NOT_ALLOWED,
 } from '@/constants/error-code'
 import { SettingsDto } from './dto/settings.dto'
 import {
@@ -21,15 +25,16 @@ import {
   CustomerStatus,
   EventStatus,
   TicketStatus,
-  TicketTypeStatus,
 } from '@prisma/client'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
-import { AddEventStaffDto } from './dto/add-event-staff'
+import { AddEventStaffDto } from './dto/add-event-staff.dto'
 import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
 import { delay } from '../../../utils'
 import { UpdateEventTicketDto } from './dto/update-event-ticket.dto'
-import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets-dto'
+import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets.dto'
+import { PreviewEventDto } from './dto/preview-event.dto'
+import { UpdateEventTicketTypeDto } from './dto/update-event-ticket-type.dto'
 
 @Injectable()
 export class OrganizerService {
@@ -117,10 +122,11 @@ export class OrganizerService {
       endTime,
       ticketReleaseTime,
       stopSaleBefore,
+      checkInBefore,
       description,
+      eventAvatar,
       resaleFeeRate,
       maxResaleTimes,
-      ipfsUri,
     } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
@@ -138,18 +144,19 @@ export class OrganizerService {
         endTime,
         ticketReleaseTime,
         stopSaleBefore,
+        checkInBefore,
         description,
+        eventAvatar: eventAvatar || null,
         resaleFeeRate,
         maxResaleTimes,
-        ipfsUri: ipfsUri || null,
         customer: {
           connect: {
             id: customerId,
           },
         },
 
-        // 默认为未开始，因为还要配置活动类型，生成票数据
-        status: EventStatus.INACTIVE,
+        // 默认为DRAFT，因为还要配置活动类型，生成票数据
+        status: EventStatus.DRAFT,
       },
     })
 
@@ -170,7 +177,7 @@ export class OrganizerService {
       where: {
         customerId,
         status: {
-          in: [EventStatus.ACTIVE, EventStatus.INACTIVE],
+          in: [EventStatus.ACTIVE, EventStatus.PREVIEW, EventStatus.DRAFT],
         },
       },
       orderBy: {
@@ -236,12 +243,168 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
+    if (event.status !== EventStatus.DRAFT) {
+      throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
+    }
+
     return this.prisma.event.update({
       where: {
         id: eventId,
       },
       data: {
         ...dto,
+      },
+    })
+  }
+
+  async previewEvent(
+    user: CustomerJwtUserData,
+    eventId: string,
+    dto: PreviewEventDto
+  ) {
+    const { customerId, walletId } = user
+    const { ipfsUri } = dto
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+
+    this.assertValidOrganizer(customer)
+
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
+    }
+
+    if (event.customerId !== customerId) {
+      throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    if (event.status !== EventStatus.DRAFT) {
+      throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
+    }
+
+    return this.prisma.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        ipfsUri,
+        status: EventStatus.PREVIEW,
+      },
+    })
+  }
+
+  async publishEvent(user: CustomerJwtUserData, eventId: string) {
+    const { customerId, walletId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+
+    this.assertValidOrganizer(customer)
+
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
+    }
+
+    if (event.customerId !== customerId) {
+      throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    if (event.status !== EventStatus.PREVIEW) {
+      throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
+    }
+
+    return this.prisma.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        status: EventStatus.ACTIVE,
+      },
+    })
+  }
+
+  async deleteEvent(user: CustomerJwtUserData, eventId: string) {
+    const { customerId, walletId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+
+    this.assertValidOrganizer(customer)
+
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
+    }
+
+    if (event.customerId !== customerId) {
+      throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    if (event.status !== EventStatus.DRAFT) {
+      throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
+    }
+
+    // 检查是否有非NEW状态的票，有则不允许删除
+    const eventTicket = await this.prisma.eventTicket.findFirst({
+      where: {
+        eventId,
+        status: {
+          in: [
+            TicketStatus.LOCK,
+            TicketStatus.SOLD,
+            TicketStatus.RESALE,
+            TicketStatus.USED,
+          ],
+        },
+      },
+    })
+
+    if (eventTicket) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_HAS_TICKETS)
+    }
+
+    // 上面的判断应该可以覆盖订单表，所以暂时不扫描订单表查找该事件。
+
+    // 删除这个Event关联的所有的票
+    await this.prisma.eventTicket.deleteMany({
+      where: {
+        eventId,
+      },
+    })
+
+    // 删除这个Event关联的所有的票类型
+    await this.prisma.eventTicketType.deleteMany({
+      where: {
+        eventId,
+      },
+    })
+
+    return this.prisma.event.delete({
+      where: {
+        id: eventId,
       },
     })
   }
@@ -407,7 +570,7 @@ export class OrganizerService {
     dto: AddEventTicketTypeWithTicketsDto
   ) {
     const { customerId, walletId } = user
-    const { tierName, tierPrice, tickets } = dto
+    const { ticketTypeId, tickets } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -430,20 +593,52 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
-    let eventTicketType = await this.prisma.eventTicketType.create({
-      data: {
-        event: {
-          connect: {
-            id: eventId,
-          },
-        },
-        tierName,
-        tierPrice,
-        initStatus: TicketTypeStatus.NEW,
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.PREVIEW
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED)
+    }
+
+    let eventTicketType = await this.prisma.eventTicketType.findUnique({
+      where: {
+        id: ticketTypeId,
       },
     })
 
+    if (!eventTicketType) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_NOT_FOUND)
+    }
+
+    if (eventTicketType.eventId !== eventId) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT)
+    }
+
     for (let ticket of tickets) {
+      // 检查票的状态，DRAFT和PREVIEW阶段添加的票只能是 NEW, NOT_FOR_SALE, NOT_EXIST
+      if (
+        ![
+          TicketStatus.NEW,
+          TicketStatus.NOT_EXIST,
+          TicketStatus.NOT_FOR_SALE,
+        ].includes(ticket.status)
+      ) {
+        // 忽略，继续处理
+        continue
+      }
+
+      // 检查坐标，如果相同坐标已经有票，则忽略
+      const findTicket = await this.prisma.eventTicket.findFirst({
+        where: {
+          rowNumber: ticket.rowNumber,
+          columnNumber: ticket.columnNumber,
+          ticketTypeId: ticketTypeId,
+        },
+      })
+      if (findTicket) {
+        continue
+      }
+
       await this.prisma.eventTicket.create({
         data: {
           event: {
@@ -461,7 +656,7 @@ export class OrganizerService {
           name: ticket.name,
           initialPrice: ticket.price,
           previousPrice: ticket.price,
-          price: ticket.price,
+          price: ticket.price <= 0 ? eventTicketType.tierPrice : ticket.price,
 
           // 基于放票时间
           saleStartTime: event.ticketReleaseTime,
@@ -485,7 +680,7 @@ export class OrganizerService {
     dto: AddEventTicketTypeDto
   ) {
     const { customerId, walletId } = user
-    const { tierName, tierPrice, tierRows, tierColumns } = dto
+    const { tierName, tierPrice, color } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -508,6 +703,13 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.PREVIEW
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED)
+    }
+
     let eventTicketType = await this.prisma.eventTicketType.create({
       data: {
         event: {
@@ -517,56 +719,54 @@ export class OrganizerService {
         },
         tierName,
         tierPrice,
-        tierRows,
-        tierColumns,
-        initStatus: TicketTypeStatus.NEW,
+        color,
       },
     })
 
-    // 初始化票数据，生成所有票，阻塞执行
-    for (let i = 1; i <= tierRows; i++) {
-      for (let j = 1; j <= tierColumns; j++) {
-        await this.prisma.eventTicket.create({
-          data: {
-            event: {
-              connect: {
-                id: eventId,
-              },
-            },
-            ticketType: {
-              connect: {
-                id: eventTicketType.id,
-              },
-            },
-            rowNumber: i,
-            columnNumber: j,
-            name: `${i}-${j}`,
-            initialPrice: tierPrice,
-            previousPrice: tierPrice,
-            price: tierPrice,
+    return eventTicketType
+  }
 
-            // 基于放票时间
-            saleStartTime: event.ticketReleaseTime,
+  async updateEventTicketType(
+    user: CustomerJwtUserData,
+    eventId: string,
+    ticketTypeId: string,
+    dto: UpdateEventTicketTypeDto
+  ) {
+    const { customerId, walletId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
 
-            // 用活动结束时间减去活动结束前多少分钟停止放票
-            saleEndTime: new Date(
-              event.endTime.getTime() - event.stopSaleBefore * 60000
-            ),
-            status: TicketStatus.NEW,
-          },
-        })
-        await delay(10)
-      }
+    this.assertValidOrganizer(customer)
+
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
     }
 
-    // 更新 initStatus
-    eventTicketType = await this.prisma.eventTicketType.update({
+    if (event.customerId !== customerId) {
+      throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.PREVIEW
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED)
+    }
+
+    let eventTicketType = await this.prisma.eventTicketType.update({
       where: {
-        id: eventTicketType.id,
+        id: ticketTypeId,
       },
-      data: {
-        initStatus: TicketTypeStatus.DONE,
-      },
+      data: dto,
     })
 
     return eventTicketType
@@ -661,17 +861,25 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
-    // 判断如果当前活动处于 ACTIVE状态，则不允许删除
-    if (event.status === EventStatus.ACTIVE) {
-      throw new ApiException(ERROR_EVENT_ACTIVE)
+    // 判断如果当前活动不处于 DRAFT或PREVIEW状态，则抛出错误
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.PREVIEW
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED)
     }
 
-    // 判断如果存在任何票处于SOLD, RESALE, USED 状态，则不允许删除
+    // 判断如果存在任何票处于LOCK, SOLD, RESALE, USED 状态，则不允许删除
     const eventTicket = await this.prisma.eventTicket.findFirst({
       where: {
         ticketTypeId,
         status: {
-          in: [TicketStatus.SOLD, TicketStatus.RESALE, TicketStatus.USED],
+          in: [
+            TicketStatus.LOCK,
+            TicketStatus.SOLD,
+            TicketStatus.RESALE,
+            TicketStatus.USED,
+          ],
         },
       },
     })
@@ -750,7 +958,7 @@ export class OrganizerService {
     dto: UpdateEventTicketDto
   ) {
     const { customerId, walletId } = user
-    const { status, name } = dto
+    const { status, ticketTypeId } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -787,9 +995,12 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
     }
 
-    // 只有活动处于 INACTIVE 状态时才允许修改票数据
-    if (event.status !== EventStatus.INACTIVE) {
-      throw new ApiException(ERROR_EVENT_ACTIVE)
+    // 只有活动处于 DRAFT或PREVIEW状态时才允许修改票数据
+    if (
+      event.status !== EventStatus.DRAFT &&
+      event.status !== EventStatus.PREVIEW
+    ) {
+      throw new ApiException(ERROR_EVENT_TICKET_UPDATE_NOT_ALLOWED)
     }
 
     // 这里意味着只有票处于这3个状态时才允许修改，也只能修改为这3个状态
@@ -803,14 +1014,27 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE)
     }
 
+    if (ticketTypeId) {
+      const ticketType = await this.prisma.eventTicketType.findUnique({
+        where: {
+          id: ticketTypeId,
+        },
+      })
+
+      if (!ticketType) {
+        throw new ApiException(ERROR_EVENT_TICKET_TYPE_NOT_FOUND)
+      }
+
+      if (ticketType.eventId !== eventId) {
+        throw new ApiException(ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT)
+      }
+    }
+
     return this.prisma.eventTicket.update({
       where: {
         id: ticketId,
       },
-      data: {
-        status: dto.status,
-        name: name || eventTicket.name,
-      },
+      data: dto,
     })
   }
 }

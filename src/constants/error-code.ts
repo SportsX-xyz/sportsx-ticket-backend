@@ -11,6 +11,7 @@ export const ERROR_CUSTOMER_NOT_ORGANIZER = 21002
 export const ERROR_CUSTOMER_NOT_ACTIVE = 21003
 export const ERROR_CUSTOMER_NOT_ADMIN = 21004
 export const ERROR_CUSTOMER_ALREADY_EXISTS = 21005
+export const ERROR_CUSTOMER_NOT_EVENT_STAFF = 21006
 
 // Event
 export const ERROR_EVENT_NOT_FOUND = 22001
@@ -26,6 +27,12 @@ export const ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE = 22010
 export const ERROR_EVENT_STOP_SALE = 22011
 export const ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER = 22012
 export const ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE = 22013
+export const ERROR_EVENT_UPDATE_NOT_ALLOWED = 22014
+export const ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED = 22015
+export const ERROR_EVENT_TICKET_UPDATE_NOT_ALLOWED = 22016
+export const ERROR_EVENT_TICKET_TYPE_HAS_SOLD_TICKETS = 22017
+export const ERROR_EVENT_ENDED = 22018
+export const ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT = 22019
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -44,6 +51,7 @@ export const ErrorCodeMap = {
   [ERROR_CUSTOMER_NOT_ACTIVE]: 'customer.not.active',
   [ERROR_CUSTOMER_NOT_ADMIN]: 'customer.not.admin',
   [ERROR_CUSTOMER_ALREADY_EXISTS]: 'customer.already.exists',
+  [ERROR_CUSTOMER_NOT_EVENT_STAFF]: 'customer.not.event.staff',
 
   // Event
   [ERROR_EVENT_NOT_FOUND]: 'event.not.found',
@@ -62,4 +70,13 @@ export const ErrorCodeMap = {
     'event.ticket.not.owned.by.customer',
   [ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE]:
     'event.ticket.not.ready.for.resale',
+  [ERROR_EVENT_UPDATE_NOT_ALLOWED]: 'event.update.not.allowed',
+  [ERROR_EVENT_TICKET_TYPE_UPDATE_NOT_ALLOWED]:
+    'event.ticket.type.update.not.allowed',
+  [ERROR_EVENT_TICKET_UPDATE_NOT_ALLOWED]: 'event.ticket.update.not.allowed',
+  [ERROR_EVENT_TICKET_TYPE_HAS_SOLD_TICKETS]:
+    'event.ticket.type.has.sold.tickets',
+  [ERROR_EVENT_ENDED]: 'event.ended',
+  [ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT]:
+    'event.ticket.type.not.match.event',
 }

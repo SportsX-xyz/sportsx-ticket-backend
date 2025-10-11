@@ -69,10 +69,25 @@ export class CreateEventDto {
   @IsNumber()
   stopSaleBefore: number
 
+  @ApiProperty({ description: 'Check In Before, in minutes' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.notEmpty', {
+      field: 'checkInBefore',
+    }),
+  })
+  @Type(() => Number)
+  @IsNumber()
+  checkInBefore: number
+
   @ApiProperty({ description: 'Description' })
   @IsOptional()
   @IsString()
   description?: string
+
+  @ApiProperty({ description: 'Event Avatar' })
+  @IsOptional()
+  @IsString()
+  eventAvatar?: string
 
   @ApiProperty({ description: 'Resale Fee Rate' })
   @IsNotEmpty({
@@ -103,9 +118,4 @@ export class CreateEventDto {
     }),
   })
   maxResaleTimes: number
-
-  @ApiProperty({ description: 'IPFS URI' })
-  @IsString()
-  @IsOptional()
-  ipfsUri?: string
 }
