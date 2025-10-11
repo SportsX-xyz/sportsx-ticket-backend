@@ -89,9 +89,10 @@ export class ManageService {
 
   async updateCustomer(
     user: CustomerJwtUserData,
-    customerId: string,
+    customerIdForUpdate: string,
     dto: UpdateCustomerDto
   ) {
+    const { customerId, walletId } = user
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -102,7 +103,7 @@ export class ManageService {
 
     return this.prisma.customer.update({
       where: {
-        id: customerId,
+        id: customerIdForUpdate,
       },
       data: {
         // 去掉里面值为空的key
