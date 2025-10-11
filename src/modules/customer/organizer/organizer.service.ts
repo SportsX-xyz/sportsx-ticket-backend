@@ -198,7 +198,7 @@ export class OrganizerService {
 
     this.assertValidOrganizer(customer)
 
-    const event = await this.prisma.event.findUnique({
+    const event: any = await this.prisma.event.findUnique({
       where: {
         id: eventId,
       },
@@ -211,6 +211,20 @@ export class OrganizerService {
     if (event.customerId !== customerId) {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
+
+    // 添加关联ticket里的max rowNumber和maxColumnNumber
+    const result = await this.prisma.eventTicket.aggregate({
+      where: {
+        eventId,
+      },
+      _max: {
+        rowNumber: true,
+        columnNumber: true,
+      },
+    })
+
+    event.maxRow = result._max.rowNumber
+    event.maxColumn = result._max.columnNumber
 
     return event
   }

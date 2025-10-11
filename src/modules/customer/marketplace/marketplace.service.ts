@@ -41,6 +41,37 @@ export class MarketplaceService {
     return events
   }
 
+  async getEvent(eventId: string) {
+    const event: any = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+        status: {
+          in: [EventStatus.ACTIVE, EventStatus.PREVIEW],
+        },
+      },
+    })
+
+    if (!event) {
+      throw new ApiException(ERROR_EVENT_NOT_FOUND)
+    }
+
+    // 添加关联ticket里的max rowNumber和maxColumnNumber
+    const result = await this.prisma.eventTicket.aggregate({
+      where: {
+        eventId: event.id,
+      },
+      _max: {
+        rowNumber: true,
+        columnNumber: true,
+      },
+    })
+
+    event.maxRow = result._max.rowNumber
+    event.maxColumn = result._max.columnNumber
+
+    return event
+  }
+
   getEventStage(event: Event) {
     if (event.status === EventStatus.PREVIEW) {
       return 'PREVIEW'

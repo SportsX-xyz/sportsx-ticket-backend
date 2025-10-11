@@ -22,6 +22,15 @@ export class MarketplaceController {
     return this.marketplaceService.getEvents()
   }
 
+  @Get('event/:eventId')
+  @Public()
+  @ApiOperation({
+    summary: 'Get marketplace event',
+  })
+  async getEvent(@Param('eventId') eventId: string) {
+    return this.marketplaceService.getEvent(eventId)
+  }
+
   @Get('event/:eventId/types')
   @Public()
   @ApiOperation({
