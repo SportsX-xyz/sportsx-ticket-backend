@@ -212,6 +212,9 @@ export class UserService {
           in: [TicketStatus.SOLD, TicketStatus.USED],
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
   }
 
