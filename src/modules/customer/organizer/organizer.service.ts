@@ -25,6 +25,7 @@ import {
   CustomerStatus,
   EventStatus,
   TicketStatus,
+  Event,
 } from '@prisma/client'
 import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
@@ -216,7 +217,7 @@ export class OrganizerService {
 
     this.assertValidOrganizer(customer)
 
-    const events = this.prisma.event.findMany({
+    const events: any[] = await this.prisma.event.findMany({
       where: {
         customerId,
         status: {
@@ -228,7 +229,43 @@ export class OrganizerService {
       },
     })
 
+    // 给每个event添加一个stage的计算属性
+    for (let event of events) {
+      event.stage = this.getEventStage(event)
+    }
+
     return events
+  }
+
+  getEventStage(event: Event) {
+    if (event.status === EventStatus.PREVIEW) {
+      return 'PREVIEW'
+    } else if (event.status === EventStatus.DRAFT) {
+      return 'DRAFT'
+    } else if (event.status === EventStatus.DISABLED) {
+      return 'DISABLED'
+    } else {
+      // 判断时间，小于ticketReleaseTime，返回PREVIEW
+      if (new Date() < event.ticketReleaseTime) {
+        return 'PREVIEW'
+      }
+      // 判断时间，小于event.startTime，大于 releaseTime，返回ONSALE
+      else if (
+        new Date() < event.startTime &&
+        new Date() >= event.ticketReleaseTime
+      ) {
+        return 'ONSALE'
+      }
+
+      // 判断时间处于event.startTime和event.endTime之间，返回ONSALE
+      else if (new Date() >= event.startTime && new Date() < event.endTime) {
+        return 'LIVE'
+      }
+      // 判断时间，超过event.endTime，返回ENDED
+      else if (new Date() >= event.endTime) {
+        return 'ENDED'
+      }
+    }
   }
 
   async getEvent(user: CustomerJwtUserData, eventId: string) {
@@ -268,6 +305,7 @@ export class OrganizerService {
 
     event.maxRow = result._max.rowNumber
     event.maxColumn = result._max.columnNumber
+    event.stage = this.getEventStage(event)
 
     return event
   }

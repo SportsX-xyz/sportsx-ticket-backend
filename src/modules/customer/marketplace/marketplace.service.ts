@@ -68,6 +68,7 @@ export class MarketplaceService {
 
     event.maxRow = result._max.rowNumber
     event.maxColumn = result._max.columnNumber
+    event.stage = this.getEventStage(event)
 
     return event
   }
