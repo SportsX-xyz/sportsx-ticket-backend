@@ -85,9 +85,13 @@ export class CreateEventDto {
   description?: string
 
   @ApiProperty({ description: 'Event Avatar' })
-  @IsOptional()
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.notEmpty', {
+      field: 'eventAvatar',
+    }),
+  })
   @IsString()
-  eventAvatar?: string
+  eventAvatar: string
 
   @ApiProperty({ description: 'Resale Fee Rate' })
   @IsNotEmpty({

@@ -7,8 +7,14 @@ import {
   ERROR_CUSTOMER_NOT_FOUND,
   ERROR_CUSTOMER_NOT_ORGANIZER,
   ERROR_EVENT_ACTIVE,
+  ERROR_EVENT_AVATAR_INVALID,
+  ERROR_EVENT_AVATAR_NOT_FOUND,
   ERROR_EVENT_NOT_BELONG_TO_YOU,
   ERROR_EVENT_NOT_FOUND,
+  ERROR_EVENT_PINATA_AVATAR_DUPLICATE,
+  ERROR_EVENT_PINATA_AVATAR_INVALID,
+  ERROR_EVENT_PINATA_JSON_DUPLICATE,
+  ERROR_EVENT_PINATA_JSON_INVALID,
   ERROR_EVENT_STAFF_ALREADY_EXISTS,
   ERROR_EVENT_TICKET_NOT_FOUND,
   ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE,
@@ -31,7 +37,7 @@ import { CreateEventDto } from './dto/create-event.dto'
 import { UpdateEventDto } from './dto/update-event.dto'
 import { AddEventStaffDto } from './dto/add-event-staff.dto'
 import { AddEventTicketTypeDto } from './dto/add-event-ticket-type.dto'
-import { delay } from '../../../utils'
+import { delay, processBase64Image } from '../../../utils'
 import { UpdateEventTicketDto } from './dto/update-event-ticket.dto'
 import { AddEventTicketTypeWithTicketsDto } from './dto/add-event-ticket-type-with-tickets.dto'
 import { PreviewEventDto } from './dto/preview-event.dto'
@@ -45,6 +51,77 @@ export class OrganizerService {
     private readonly prisma: PrismaService,
     private configService: ConfigService
   ) {}
+
+  async uploadEventJsonToPinata(event, avatarCid: string) {
+    const pinataGateway = this.configService.get('PINATA_GATEWAY')
+    const pinataJWT = this.configService.get('PINATA_JWT')
+    const pinata = new PinataSDK({
+      pinataJwt: pinataJWT,
+      pinataGateway: pinataGateway,
+    })
+    const image = await pinata.gateways.public.convert(avatarCid)
+    const json = {
+      name: event.name,
+      description: event.description,
+      // external_url: event.external_url,
+      image,
+      attributes: [
+        {
+          trait_type: 'Event ID',
+          value: event.id,
+        },
+        {
+          trait_type: 'Event Address',
+          value: event.address,
+        },
+        {
+          trait_type: 'Event Start Time',
+          value: event.startTime,
+        },
+      ],
+    }
+    const blob = new Blob([JSON.stringify(json)], {
+      type: 'application/json',
+    })
+    const file = new File([blob], `${event.id}.json`, {
+      type: 'application/json',
+    })
+    const uploadEventJson = await pinata.upload.public.file(file)
+    // @ts-ignore
+    if (uploadEventJson.is_duplicate) {
+      throw new ApiException(ERROR_EVENT_PINATA_JSON_DUPLICATE)
+    }
+    const jsonCid = uploadEventJson.cid
+    const jsonUrl = await pinata.gateways.public.convert(jsonCid)
+    return jsonUrl
+  }
+
+  async uploadBase64AvatarToPinata(base64String: string, name: string) {
+    const pinataGateway = this.configService.get('PINATA_GATEWAY')
+    const pinataJWT = this.configService.get('PINATA_JWT')
+    const pinata = new PinataSDK({
+      pinataJwt: pinataJWT,
+      pinataGateway: pinataGateway,
+    })
+
+    const { mime, body } = processBase64Image(base64String)
+    const binaryString = atob(body) // 解码 base64 为二进制字符串
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i) // 转换为字节数组
+    }
+    const blob = new Blob([bytes], { type: mime }) // 创建 Blob，指定 MIME 类型
+    const file = new File([blob], name, {
+      type: mime,
+    }) // 自定义文件名和 MIME 类型
+
+    const upload = await pinata.upload.public.file(file)
+    // @ts-ignore
+    if (upload.is_duplicate) {
+      throw new ApiException(ERROR_EVENT_PINATA_AVATAR_DUPLICATE)
+    }
+    return upload
+  }
 
   async testPinata() {
     const pinataGateway = this.configService.get('PINATA_GATEWAY')
@@ -179,6 +256,14 @@ export class OrganizerService {
     })
 
     this.assertValidOrganizer(customer)
+
+    // check eventAvatar
+    if (eventAvatar) {
+      const { mime, body } = processBase64Image(eventAvatar)
+      if (!mime || !body) {
+        throw new ApiException(ERROR_EVENT_AVATAR_INVALID)
+      }
+    }
 
     const event = await this.prisma.event.create({
       data: {
@@ -352,13 +437,8 @@ export class OrganizerService {
     })
   }
 
-  async previewEvent(
-    user: CustomerJwtUserData,
-    eventId: string,
-    dto: PreviewEventDto
-  ) {
+  async previewEvent(user: CustomerJwtUserData, eventId: string) {
     const { customerId, walletId } = user
-    const { ipfsUri } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -385,13 +465,25 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
     }
 
+    // TODO: 把eventAvata上传成ipfs文件
+    if (!event.eventAvatar) {
+      throw new ApiException(ERROR_EVENT_AVATAR_NOT_FOUND)
+    }
+
+    const uploadAvatar = await this.uploadBase64AvatarToPinata(
+      event.eventAvatar,
+      event.id
+    )
+    const avatarCid = uploadAvatar.cid
+    const ipfsUri = await this.uploadEventJsonToPinata(event, avatarCid)
+
     return this.prisma.event.update({
       where: {
         id: eventId,
       },
       data: {
-        ipfsUri,
         status: EventStatus.PREVIEW,
+        ipfsUri,
       },
     })
   }

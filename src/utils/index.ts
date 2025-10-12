@@ -21,6 +21,26 @@ export function delay(ms: number): Promise<void> {
   })
 }
 
+export function processBase64Image(base64Str: string): { mime: string; body: string } | null {
+  // 定义支持的图片类型及其对应的Base64前缀
+  const supportedTypes: { [key: string]: string } = {
+      'image/jpeg': 'data:image/jpeg;base64,',
+      'image/png': 'data:image/png;base64,'
+  };
+
+  // 检查字符串是否以支持的前缀开头
+  for (const [mime, prefix] of Object.entries(supportedTypes)) {
+      if (base64Str.startsWith(prefix)) {
+          // 提取前缀后的编码主体
+          const body = base64Str.slice(prefix.length);
+          return { mime, body };
+      }
+  }
+
+  // 不支持的类型
+  return null;
+}
+
 /**
  * 哈希密码
  * @param password 密码

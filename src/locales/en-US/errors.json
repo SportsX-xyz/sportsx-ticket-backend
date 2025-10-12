@@ -30,5 +30,11 @@
   "event.ticket.update.not.allowed": "Event ticket update not allowed",
   "event.ticket.type.has.sold.tickets": "Event ticket type has sold tickets",
   "event.ended": "Event ended",
-  "event.ticket.type.not.match.event": "Event ticket type not match event"
+  "event.ticket.type.not.match.event": "Event ticket type not match event",
+  "event.avatar.not.found": "Event avatar not found",
+  "event.avatar.invalid": "Event avatar invalid",
+  "event.pinata.avatar.duplicate": "Event pinata avatar duplicate",
+  "event.pinata.json.duplicate": "Event pinata json duplicate",
+  "event.pinata.avatar.invalid": "Event pinata avatar invalid",
+  "event.pinata.json.invalid": "Event pinata json invalid"
 }

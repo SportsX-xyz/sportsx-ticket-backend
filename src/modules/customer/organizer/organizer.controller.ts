@@ -114,15 +114,10 @@ export class OrganizerController {
   @ApiOperation({
     summary: 'Preview an event',
   })
-  async previewEvent(
-    @Req() req: FastifyRequest,
-    @Param('id') id: string,
-    @Body() dto: PreviewEventDto
-  ) {
+  async previewEvent(@Req() req: FastifyRequest, @Param('id') id: string) {
     return this.organizerService.previewEvent(
       req.user as unknown as CustomerJwtUserData,
-      id,
-      dto
+      id
     )
   }
 

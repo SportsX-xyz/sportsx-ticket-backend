@@ -33,6 +33,12 @@ export const ERROR_EVENT_TICKET_UPDATE_NOT_ALLOWED = 22016
 export const ERROR_EVENT_TICKET_TYPE_HAS_SOLD_TICKETS = 22017
 export const ERROR_EVENT_ENDED = 22018
 export const ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT = 22019
+export const ERROR_EVENT_AVATAR_NOT_FOUND = 22020
+export const ERROR_EVENT_AVATAR_INVALID = 22021
+export const ERROR_EVENT_PINATA_AVATAR_DUPLICATE = 22022
+export const ERROR_EVENT_PINATA_JSON_DUPLICATE = 22023
+export const ERROR_EVENT_PINATA_AVATAR_INVALID = 22024
+export const ERROR_EVENT_PINATA_JSON_INVALID = 22025
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -79,4 +85,10 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_ENDED]: 'event.ended',
   [ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT]:
     'event.ticket.type.not.match.event',
+  [ERROR_EVENT_AVATAR_NOT_FOUND]: 'event.avatar.not.found',
+  [ERROR_EVENT_AVATAR_INVALID]: 'event.avatar.invalid',
+  [ERROR_EVENT_PINATA_AVATAR_DUPLICATE]: 'event.pinata.avatar.duplicate',
+  [ERROR_EVENT_PINATA_JSON_DUPLICATE]: 'event.pinata.json.duplicate',
+  [ERROR_EVENT_PINATA_AVATAR_INVALID]: 'event.pinata.avatar.invalid',
+  [ERROR_EVENT_PINATA_JSON_INVALID]: 'event.pinata.json.invalid',
 }
