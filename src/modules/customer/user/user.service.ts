@@ -208,7 +208,9 @@ export class UserService {
       },
       where: {
         ownerId: customer.id,
-        status: TicketStatus.SOLD,
+        status: {
+          in: [TicketStatus.SOLD, TicketStatus.USED],
+        },
       },
     })
   }
@@ -247,6 +249,8 @@ export class UserService {
       t."ownerId" = ${customerId}
       AND t.status = ${TicketStatus.RESALE}::"TicketStatus"
       -- AND NOW() < (e."endTime" - INTERVAL '1 minute' * e."stopSaleBefore")
+    ORDER BY
+      t.createdAt DESC
   `
 
     return tickets
