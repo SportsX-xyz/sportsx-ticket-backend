@@ -36,13 +36,9 @@ export class UpdateEventTicketDto {
   name?: string
 
   @ApiProperty({ description: 'Ticket Price' })
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 6 })
   @IsOptional()
   @IsPositive() // 如果价格不能为负数
-  @IsDecimal({
-    decimal_digits: '0,6', // 允许0到6位小数
-    force_decimal: false, // 允许整数
-  })
   price?: number
 
   @ApiProperty({ description: 'Ticket Type Id' })

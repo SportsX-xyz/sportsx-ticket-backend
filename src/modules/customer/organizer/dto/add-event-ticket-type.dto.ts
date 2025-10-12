@@ -24,12 +24,10 @@ export class AddEventTicketTypeDto {
       field: 'tierPrice',
     }),
   })
-  @IsNumber()
-  @IsPositive() // 如果价格不能为负数
-  @IsDecimal({
-    decimal_digits: '0,6', // 允许0到6位小数
-    force_decimal: false, // 允许整数
+  @IsNumber({
+    maxDecimalPlaces: 6,
   })
+  @IsPositive() // 如果价格不能为负数
   tierPrice: number
 
   @ApiProperty({ description: 'Color' })
