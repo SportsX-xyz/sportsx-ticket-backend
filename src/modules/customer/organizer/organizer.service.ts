@@ -800,7 +800,6 @@ export class OrganizerService {
     if (eventTicketType.eventId !== eventId) {
       throw new ApiException(ERROR_EVENT_TICKET_TYPE_NOT_MATCH_EVENT)
     }
-
     for (let ticket of tickets) {
       // 检查票的状态，DRAFT和PREVIEW阶段添加的票只能是 NEW, NOT_FOR_SALE, NOT_EXIST
       if (

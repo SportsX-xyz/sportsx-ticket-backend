@@ -21,8 +21,11 @@ export class TicketItem {
   @ApiProperty({ description: 'Price' })
   @IsNumber()
   price: number
-  @ApiProperty({ description: 'Status', enum: ['NEW', 'NOT_FOR_SALE'] })
-  status: 'NEW' | 'NOT_FOR_SALE'
+  @ApiProperty({
+    description: 'Status',
+    enum: ['NEW', 'NOT_EXIST', 'NOT_FOR_SALE'],
+  })
+  status: 'NEW' | 'NOT_EXIST' | 'NOT_FOR_SALE'
 }
 
 export class AddEventTicketTypeWithTicketsDto {
@@ -41,6 +44,6 @@ export class AddEventTicketTypeWithTicketsDto {
       field: 'tickets',
     }),
   })
-  @ValidateNested({ each: true }) // 验证数组中的每个元素
+  // @ValidateNested({ each: true }) // 验证数组中的每个元素
   tickets: TicketItem[]
 }
