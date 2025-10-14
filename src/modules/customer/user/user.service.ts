@@ -229,6 +229,8 @@ export class UserService {
         name: true,
         status: true,
         price: true,
+        rowNumber: true,
+        columnNumber: true,
       },
       where: {
         ownerId: customer.id,
@@ -257,6 +259,8 @@ export class UserService {
       t.name,
       t.status,
       t."price",
+      t."rowNumber",
+      t."columnNumber",
       json_build_object(
         'id', e.id,
         'name', e.name,
