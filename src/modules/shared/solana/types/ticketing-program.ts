@@ -1,0 +1,911 @@
+import { PublicKey } from '@solana/web3.js'
+import { Program } from '@coral-xyz/anchor'
+import type { Idl } from '@coral-xyz/anchor'
+// IDL JSON（保持原始格式）
+export const TICKETING_IDL: Idl = {
+  address: 'tDdGYG37gZufntQqs7ZPuiSRyrceNP5ZdygqVQLjUGw',
+  metadata: {
+    name: 'ticketing_program',
+    version: '0.1.0',
+    spec: '0.1.0',
+    description: 'Created with Anchor',
+  },
+  instructions: [
+    {
+      name: 'create_event',
+      docs: ['Create an event and initialize NFT mint'],
+      discriminator: [49, 219, 29, 203, 22, 98, 100, 87],
+      accounts: [
+        {
+          name: 'payer',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'event',
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [69, 86, 69, 78, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'event_id',
+              },
+            ],
+          },
+        },
+        {
+          name: 'platform_config',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [
+                  80, 76, 65, 84, 70, 79, 82, 77, 95, 67, 79, 78, 70, 73, 71,
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: 'platform_authority',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'system_program',
+          address: '11111111111111111111111111111111',
+        },
+      ],
+      args: [
+        {
+          name: 'event_id',
+          type: 'string',
+        },
+        {
+          name: 'uri',
+          type: 'string',
+        },
+        {
+          name: 'merchant_key',
+          type: 'pubkey',
+        },
+        {
+          name: 'name',
+          type: 'string',
+        },
+        {
+          name: 'symbol',
+          type: 'string',
+        },
+        {
+          name: 'expiry_timestamp',
+          type: 'i64',
+        },
+      ],
+    },
+    {
+      name: 'initialize_platform_config',
+      docs: ['Initialize platform configuration'],
+      discriminator: [23, 52, 237, 53, 176, 235, 3, 187],
+      accounts: [
+        {
+          name: 'payer',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'platform_config',
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [
+                  80, 76, 65, 84, 70, 79, 82, 77, 95, 67, 79, 78, 70, 73, 71,
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: 'admin',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'system_program',
+          address: '11111111111111111111111111111111',
+        },
+      ],
+      args: [
+        {
+          name: 'platform_authority',
+          type: 'pubkey',
+        },
+        {
+          name: 'usdt_mint',
+          type: 'pubkey',
+        },
+      ],
+    },
+    {
+      name: 'purchase_and_mint',
+      docs: ['Purchase and mint a ticket NFT'],
+      discriminator: [230, 6, 46, 112, 161, 71, 90, 248],
+      accounts: [
+        {
+          name: 'user',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'platform_authority',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'usdt_mint',
+        },
+        {
+          name: 'user_usdt_ata',
+          writable: true,
+        },
+        {
+          name: 'platform_usdt_vault',
+          writable: true,
+        },
+        {
+          name: 'merchant_usdt_vault',
+          writable: true,
+        },
+        {
+          name: 'ticket_mint',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'user_nft_ata',
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: 'account',
+                path: 'user',
+              },
+              {
+                kind: 'const',
+                value: [
+                  6, 221, 246, 225, 215, 101, 161, 147, 217, 203, 225, 70, 206,
+                  235, 121, 172, 28, 180, 133, 237, 95, 91, 55, 145, 58, 140,
+                  245, 133, 126, 255, 0, 169,
+                ],
+              },
+              {
+                kind: 'account',
+                path: 'ticket_mint',
+              },
+            ],
+            program: {
+              kind: 'const',
+              value: [
+                140, 151, 37, 143, 78, 36, 137, 241, 187, 61, 16, 41, 20, 142,
+                13, 131, 11, 90, 19, 153, 218, 255, 16, 132, 4, 142, 123, 216,
+                219, 233, 248, 89,
+              ],
+            },
+          },
+        },
+        {
+          name: 'mint_authority',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [77, 73, 78, 84, 95, 65, 85, 84, 72],
+              },
+            ],
+          },
+        },
+        {
+          name: 'seat_account',
+          writable: true,
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [84, 73, 67, 75, 69, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'ticket_id',
+              },
+              {
+                kind: 'account',
+                path: 'event',
+              },
+            ],
+          },
+        },
+        {
+          name: 'event',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [69, 86, 69, 78, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'event_id',
+              },
+            ],
+          },
+        },
+        {
+          name: 'platform_config',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [
+                  80, 76, 65, 84, 70, 79, 82, 77, 95, 67, 79, 78, 70, 73, 71,
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: 'system_program',
+          address: '11111111111111111111111111111111',
+        },
+        {
+          name: 'token_program',
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        },
+        {
+          name: 'associated_token_program',
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+        },
+        {
+          name: 'rent',
+          address: 'SysvarRent111111111111111111111111111111111',
+        },
+      ],
+      args: [
+        {
+          name: 'ticket_price_usdt',
+          type: 'u64',
+        },
+        {
+          name: 'ticket_id',
+          type: 'string',
+        },
+        {
+          name: 'event_id',
+          type: 'string',
+        },
+        {
+          name: 'seat_number',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      name: 'query_ticket_status',
+      docs: ['Query ticket status'],
+      discriminator: [254, 161, 97, 162, 103, 219, 98, 106],
+      accounts: [
+        {
+          name: 'seat_account',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [84, 73, 67, 75, 69, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'ticket_id',
+              },
+              {
+                kind: 'account',
+                path: 'event',
+              },
+            ],
+          },
+        },
+        {
+          name: 'event',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [69, 86, 69, 78, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'event_id',
+              },
+            ],
+          },
+        },
+      ],
+      args: [
+        {
+          name: 'ticket_id',
+          type: 'string',
+        },
+        {
+          name: 'event_id',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      name: 'scan_ticket',
+      docs: ['Scan a ticket'],
+      discriminator: [34, 65, 77, 69, 164, 95, 218, 165],
+      accounts: [
+        {
+          name: 'merchant',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'seat_account',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [84, 73, 67, 75, 69, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'ticket_id',
+              },
+              {
+                kind: 'account',
+                path: 'event',
+              },
+            ],
+          },
+        },
+        {
+          name: 'event',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [69, 86, 69, 78, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'event_id',
+              },
+            ],
+          },
+        },
+      ],
+      args: [
+        {
+          name: 'ticket_id',
+          type: 'string',
+        },
+        {
+          name: 'event_id',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      name: 'update_seat_number',
+      docs: ['Update seat number'],
+      discriminator: [32, 232, 195, 14, 196, 57, 227, 179],
+      accounts: [
+        {
+          name: 'merchant',
+          writable: true,
+          signer: true,
+        },
+        {
+          name: 'mint',
+          writable: true,
+        },
+        {
+          name: 'mint_authority',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [77, 73, 78, 84, 95, 65, 85, 84, 72],
+              },
+            ],
+          },
+        },
+        {
+          name: 'seat_account',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [84, 73, 67, 75, 69, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'ticket_id',
+              },
+              {
+                kind: 'account',
+                path: 'event',
+              },
+            ],
+          },
+        },
+        {
+          name: 'event',
+          pda: {
+            seeds: [
+              {
+                kind: 'const',
+                value: [69, 86, 69, 78, 84],
+              },
+              {
+                kind: 'arg',
+                path: 'event_id',
+              },
+            ],
+          },
+        },
+        {
+          name: 'token_program',
+          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        },
+      ],
+      args: [
+        {
+          name: 'ticket_id',
+          type: 'string',
+        },
+        {
+          name: 'event_id',
+          type: 'string',
+        },
+        {
+          name: 'new_seat_number',
+          type: 'string',
+        },
+      ],
+    },
+  ],
+  accounts: [
+    {
+      name: 'Events',
+      discriminator: [65, 3, 213, 60, 248, 78, 29, 92],
+    },
+    {
+      name: 'PlatformConfig',
+      discriminator: [160, 78, 128, 0, 248, 83, 230, 160],
+    },
+    {
+      name: 'SeatStatus',
+      discriminator: [124, 98, 25, 32, 222, 13, 90, 7],
+    },
+  ],
+  events: [
+    {
+      name: 'EventCreated',
+      discriminator: [59, 186, 199, 175, 242, 25, 238, 94],
+    },
+    {
+      name: 'PlatformConfigInitialized',
+      discriminator: [108, 139, 227, 208, 240, 110, 23, 168],
+    },
+    {
+      name: 'SeatNumberUpdated',
+      discriminator: [152, 43, 29, 77, 93, 81, 15, 212],
+    },
+    {
+      name: 'TicketMinted',
+      discriminator: [22, 17, 212, 38, 91, 144, 104, 109],
+    },
+    {
+      name: 'TicketScanned',
+      discriminator: [209, 75, 59, 166, 20, 112, 252, 206],
+    },
+    {
+      name: 'TicketStatusQueried',
+      discriminator: [95, 168, 9, 25, 140, 41, 64, 238],
+    },
+  ],
+  errors: [
+    {
+      code: 6000,
+      name: 'InsufficientFunds',
+      msg: 'Insufficient funds for ticket purchase',
+    },
+    {
+      code: 6001,
+      name: 'TicketIdTooLong',
+      msg: 'Ticket ID exceeds maximum length',
+    },
+    {
+      code: 6002,
+      name: 'EventIdTooLong',
+      msg: 'Event ID exceeds maximum length',
+    },
+    {
+      code: 6003,
+      name: 'SeatNumberTooLong',
+      msg: 'Seat number exceeds maximum length',
+    },
+    {
+      code: 6004,
+      name: 'NameTooLong',
+      msg: 'Name exceeds maximum length',
+    },
+    {
+      code: 6005,
+      name: 'SymbolTooLong',
+      msg: 'Symbol exceeds maximum length',
+    },
+    {
+      code: 6006,
+      name: 'MintNotInitialized',
+      msg: 'Mint account not properly initialized',
+    },
+    {
+      code: 6007,
+      name: 'InvalidUsdtMint',
+      msg: 'Invalid USDT mint provided',
+    },
+    {
+      code: 6008,
+      name: 'InvalidUri',
+      msg: 'Invalid URI format or length',
+    },
+    {
+      code: 6009,
+      name: 'ExtensionInitializationFailed',
+      msg: 'Token-2022 extension initialization failed',
+    },
+    {
+      code: 6010,
+      name: 'TicketAlreadyMinted',
+      msg: 'Ticket already minted',
+    },
+    {
+      code: 6011,
+      name: 'InvalidEventId',
+      msg: 'Invalid event ID',
+    },
+    {
+      code: 6012,
+      name: 'InvalidPlatformAuthority',
+      msg: 'Invalid platform authority',
+    },
+    {
+      code: 6013,
+      name: 'InvalidMerchantAuthority',
+      msg: 'Invalid merchant authority',
+    },
+    {
+      code: 6014,
+      name: 'UnauthorizedAdmin',
+      msg: 'Unauthorized admin',
+    },
+    {
+      code: 6015,
+      name: 'EventExpired',
+      msg: 'Event has expired',
+    },
+    {
+      code: 6016,
+      name: 'TicketNotMinted',
+      msg: 'Ticket not minted',
+    },
+    {
+      code: 6017,
+      name: 'TicketAlreadyScanned',
+      msg: 'Ticket already scanned',
+    },
+    {
+      code: 6018,
+      name: 'InvalidExpiryTimestamp',
+      msg: 'Invalid expiry timestamp',
+    },
+    {
+      code: 6019,
+      name: 'InvalidMint',
+      msg: 'Invalid mint account',
+    },
+  ],
+  types: [
+    {
+      name: 'EventCreated',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'uri',
+            type: 'string',
+          },
+          {
+            name: 'merchant_key',
+            type: 'pubkey',
+          },
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'symbol',
+            type: 'string',
+          },
+          {
+            name: 'expiry_timestamp',
+            type: 'i64',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'Events',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'uri',
+            type: 'string',
+          },
+          {
+            name: 'merchant_key',
+            type: 'pubkey',
+          },
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'symbol',
+            type: 'string',
+          },
+          {
+            name: 'expiry_timestamp',
+            type: 'i64',
+          },
+          {
+            name: 'bump',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'PlatformConfig',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'platform_authority',
+            type: 'pubkey',
+          },
+          {
+            name: 'usdt_mint',
+            type: 'pubkey',
+          },
+          {
+            name: 'bump',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'PlatformConfigInitialized',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'platform_authority',
+            type: 'pubkey',
+          },
+          {
+            name: 'usdt_mint',
+            type: 'pubkey',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'SeatNumberUpdated',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'ticket_id',
+            type: 'string',
+          },
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'new_seat_number',
+            type: 'string',
+          },
+          {
+            name: 'merchant',
+            type: 'pubkey',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'SeatStatus',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'is_minted',
+            type: 'bool',
+          },
+          {
+            name: 'is_scanned',
+            type: 'bool',
+          },
+          {
+            name: 'bump',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'TicketMinted',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'user',
+            type: 'pubkey',
+          },
+          {
+            name: 'mint',
+            type: 'pubkey',
+          },
+          {
+            name: 'ticket_id',
+            type: 'string',
+          },
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'ticket_price',
+            type: 'u64',
+          },
+          {
+            name: 'merchant',
+            type: 'pubkey',
+          },
+          {
+            name: 'seat_number',
+            type: 'string',
+          },
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'symbol',
+            type: 'string',
+          },
+          {
+            name: 'uri',
+            type: 'string',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'TicketScanned',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'ticket_id',
+            type: 'string',
+          },
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'merchant',
+            type: 'pubkey',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+    {
+      name: 'TicketStatusQueried',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'ticket_id',
+            type: 'string',
+          },
+          {
+            name: 'event_id',
+            type: 'string',
+          },
+          {
+            name: 'uri',
+            type: 'string',
+          },
+          {
+            name: 'is_minted',
+            type: 'bool',
+          },
+          {
+            name: 'is_scanned',
+            type: 'bool',
+          },
+          {
+            name: 'timestamp',
+            type: 'i64',
+          },
+        ],
+      },
+    },
+  ],
+}
+
+// 程序 ID
+export const PROGRAM_ID = new PublicKey(
+  'tDdGYG37gZufntQqs7ZPuiSRyrceNP5ZdygqVQLjUGw'
+)
+
+// PDA 种子常量
+export const SEEDS = {
+  PLATFORM_CONFIG: Uint8Array.from([
+    80, 76, 65, 84, 70, 79, 82, 77, 95, 67, 79, 78, 70, 73, 71,
+  ]),
+  EVENT: Uint8Array.from([69, 86, 69, 78, 84]),
+  TICKET: Uint8Array.from([84, 73, 67, 75, 69, 84]),
+  MINT_AUTH: Uint8Array.from([77, 73, 78, 84, 95, 65, 85, 84, 72]),
+} as const

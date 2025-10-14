@@ -202,8 +202,30 @@ export class UserService {
     return this.prisma.eventTicket.findMany({
       select: {
         id: true,
-        event: true,
-        ticketType: true,
+        event: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            description: true,
+            startTime: true,
+            endTime: true,
+          },
+        },
+        ticketType: {
+          select: {
+            id: true,
+            tierName: true,
+          },
+        },
+        lastOrder: {
+          select: {
+            id: true,
+            price: true,
+            txHash: true,
+            createdAt: true,
+          },
+        },
         name: true,
         status: true,
         price: true,
@@ -252,10 +274,11 @@ export class UserService {
     INNER JOIN "EventTicketType" tt ON t."ticketTypeId" = tt.id
     WHERE
       t."ownerId" = ${customerId}
-      AND t.status IN (${TicketStatus.RESALE}, ${TicketStatus.LOCK})::"TicketStatus"
+      AND t.status IN (${TicketStatus.RESALE}::"TicketStatus",
+        ${TicketStatus.LOCK}::"TicketStatus")
       -- AND NOW() < (e."endTime" - INTERVAL '1 minute' * e."stopSaleBefore")
     ORDER BY
-      t.createdAt DESC
+      t."createdAt" DESC
   `
 
     return tickets
@@ -284,18 +307,18 @@ export class UserService {
     }
 
     // TODO:验证，每个用户每个活动只能买一张票
-    const hasTicket = await this.prisma.eventTicket.findFirst({
-      where: {
-        eventId: ticket.eventId,
-        ownerId: customer.id,
-        status: {
-          in: [TicketStatus.SOLD, TicketStatus.USED, TicketStatus.RESALE],
-        },
-      },
-    })
-    if (hasTicket) {
-      throw new ApiException(ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT)
-    }
+    // const hasTicket = await this.prisma.eventTicket.findFirst({
+    //   where: {
+    //     eventId: ticket.eventId,
+    //     ownerId: customer.id,
+    //     status: {
+    //       in: [TicketStatus.SOLD, TicketStatus.USED, TicketStatus.RESALE],
+    //     },
+    //   },
+    // })
+    // if (hasTicket) {
+    //   throw new ApiException(ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT)
+    // }
 
     // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
 
@@ -436,6 +459,18 @@ export class UserService {
       where: {
         id: orderId,
       },
+      select: {
+        id: true,
+        ticketId: true,
+        ticket: {
+          select: {
+            id: true,
+            ownerId: true,
+            resaleTimes: true,
+            status: true,
+          },
+        },
+      },
     })
 
     // TODO: 支付业务逻辑
@@ -461,6 +496,17 @@ export class UserService {
     })
 
     // TODO: 更新ticket，的ownerId, lastOrderId
+    await this.prisma.eventTicket.update({
+      where: {
+        id: order.ticketId,
+      },
+      data: {
+        status: TicketStatus.SOLD,
+        resaleTimes: order.ticket.resaleTimes + 1,
+        ownerId: customer.id,
+        lastOrderId: order.id,
+      },
+    })
     // TODO: 计算分账？
     return updatedOrder
   }
