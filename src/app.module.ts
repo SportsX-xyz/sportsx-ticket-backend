@@ -32,6 +32,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AdminModule } from './modules/admin/admin.module'
 import { CustomerModule } from './modules/customer/customer.module'
+import { SolanaModule } from './modules/shared/solana/solana.module'
 
 // 设置默认时区为东八区
 dayjs.extend(utc)
@@ -58,6 +59,7 @@ const envFilePath = getEnvPath(__dirname)
         ...(await configService.get('database')),
       }),
     }),
+    SolanaModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],

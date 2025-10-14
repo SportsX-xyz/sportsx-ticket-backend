@@ -36,5 +36,6 @@
   "event.pinata.avatar.duplicate": "Event pinata avatar duplicate",
   "event.pinata.json.duplicate": "Event pinata json duplicate",
   "event.pinata.avatar.invalid": "Event pinata avatar invalid",
-  "event.pinata.json.invalid": "Event pinata json invalid"
+  "event.pinata.json.invalid": "Event pinata json invalid",
+  "event.ticket.not.ready.for.unlist": "Event ticket not ready for unlist"
 }

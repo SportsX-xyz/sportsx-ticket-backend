@@ -39,6 +39,7 @@ export const ERROR_EVENT_PINATA_AVATAR_DUPLICATE = 22022
 export const ERROR_EVENT_PINATA_JSON_DUPLICATE = 22023
 export const ERROR_EVENT_PINATA_AVATAR_INVALID = 22024
 export const ERROR_EVENT_PINATA_JSON_INVALID = 22025
+export const ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST = 22026
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -91,4 +92,6 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_PINATA_JSON_DUPLICATE]: 'event.pinata.json.duplicate',
   [ERROR_EVENT_PINATA_AVATAR_INVALID]: 'event.pinata.avatar.invalid',
   [ERROR_EVENT_PINATA_JSON_INVALID]: 'event.pinata.json.invalid',
+  [ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST]:
+    'event.ticket.not.ready.for.unlist',
 }

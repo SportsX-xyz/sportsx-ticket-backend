@@ -14,6 +14,7 @@ import {
   ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER,
   ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_SALE,
+  ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST,
   ERROR_PRIVY_LOGIN_FAILED,
 } from '../../../constants/error-code'
 import { CustomerJwtUserData } from '../../../types'
@@ -250,7 +251,7 @@ export class UserService {
     INNER JOIN "EventTicketType" tt ON t."ticketTypeId" = tt.id
     WHERE
       t."ownerId" = ${customerId}
-      AND t.status = ${TicketStatus.RESALE}::"TicketStatus"
+      AND t.status IN (${TicketStatus.RESALE}, ${TicketStatus.LOCK})::"TicketStatus"
       -- AND NOW() < (e."endTime" - INTERVAL '1 minute' * e."stopSaleBefore")
     ORDER BY
       t.createdAt DESC
@@ -280,6 +281,8 @@ export class UserService {
     ) {
       throw new ApiException(ERROR_EVENT_TICKET_NOT_READY_FOR_SALE)
     }
+
+    // TODO:验证，每个用户每个活动只能买一张票
 
     // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
 
@@ -340,6 +343,41 @@ export class UserService {
         status: TicketStatus.RESALE,
         previousPrice: ticket.price,
         price,
+      },
+    })
+
+    return updatedTicket
+  }
+
+  async unlist(user: CustomerJwtUserData, ticketId: string) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    if (ticket.ownerId !== customer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER)
+    }
+    if (![TicketStatus.RESALE].includes(ticket.status as any)) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST)
+    }
+
+    const updatedTicket = await this.prisma.eventTicket.update({
+      where: {
+        id: ticket.id,
+      },
+      data: {
+        status: TicketStatus.SOLD,
       },
     })
 

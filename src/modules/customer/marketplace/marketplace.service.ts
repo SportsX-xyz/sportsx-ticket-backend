@@ -7,10 +7,14 @@ import {
   ERROR_EVENT_NOT_FOUND,
   ERROR_EVENT_STOP_SALE,
 } from '@/constants/error-code'
+import { OrganizerService } from '../organizer/organizer.service'
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly organizerService: OrganizerService
+  ) {}
 
   async getEvents() {
     const events: any[] = await this.prisma.event.findMany({
@@ -23,6 +27,20 @@ export class MarketplaceService {
 
     // 统计每个event下有多少可售余票
     for (let event of events) {
+      const totalTickets = await this.prisma.eventTicket.count({
+        where: {
+          eventId: event.id,
+          status: {
+            in: [
+              TicketStatus.NEW,
+              TicketStatus.RESALE,
+              TicketStatus.LOCK,
+              TicketStatus.SOLD,
+              TicketStatus.USED,
+            ],
+          },
+        },
+      })
       const ticketsLeft = await this.prisma.eventTicket.count({
         where: {
           eventId: event.id,
@@ -31,11 +49,22 @@ export class MarketplaceService {
           },
         },
       })
+      const resaleTicketsLeft = await this.prisma.eventTicket.count({
+        where: {
+          eventId: event.id,
+          status: {
+            in: [TicketStatus.RESALE],
+          },
+        },
+      })
       event.ticketsLeft = ticketsLeft
+      event.totalTickets = totalTickets
+      event.resaleTicketsLeft = resaleTicketsLeft
 
       // 给每个event添加一个stage的计算属性
       // stage包括：DRAFT, PREVIEW, ONSALE, LIVE, ENDED
-      event.stage = this.getEventStage(event)
+      event.stage = this.organizerService.getEventStage(event)
+      event.checkable = this.organizerService.getCheckable(event)
     }
 
     return events
@@ -66,42 +95,46 @@ export class MarketplaceService {
       },
     })
 
+    const totalTickets = await this.prisma.eventTicket.count({
+      where: {
+        eventId: event.id,
+        status: {
+          in: [
+            TicketStatus.NEW,
+            TicketStatus.RESALE,
+            TicketStatus.LOCK,
+            TicketStatus.SOLD,
+            TicketStatus.USED,
+          ],
+        },
+      },
+    })
+    const ticketsLeft = await this.prisma.eventTicket.count({
+      where: {
+        eventId: event.id,
+        status: {
+          in: [TicketStatus.NEW, TicketStatus.RESALE],
+        },
+      },
+    })
+    const resaleTicketsLeft = await this.prisma.eventTicket.count({
+      where: {
+        eventId: event.id,
+        status: {
+          in: [TicketStatus.RESALE],
+        },
+      },
+    })
+    event.ticketsLeft = ticketsLeft
+    event.totalTickets = totalTickets
+    event.resaleTicketsLeft = resaleTicketsLeft
+
     event.maxRow = result._max.rowNumber
     event.maxColumn = result._max.columnNumber
-    event.stage = this.getEventStage(event)
+    event.stage = this.organizerService.getEventStage(event)
+    event.checkable = this.organizerService.getCheckable(event)
 
     return event
-  }
-
-  getEventStage(event: Event) {
-    if (event.status === EventStatus.PREVIEW) {
-      return 'PREVIEW'
-    } else if (event.status === EventStatus.DRAFT) {
-      return 'DRAFT'
-    } else if (event.status === EventStatus.DISABLED) {
-      return 'DISABLED'
-    } else {
-      // 判断时间，小于ticketReleaseTime，返回PREVIEW
-      if (new Date() < event.ticketReleaseTime) {
-        return 'PREVIEW'
-      }
-      // 判断时间，小于event.startTime，大于 releaseTime，返回ONSALE
-      else if (
-        new Date() < event.startTime &&
-        new Date() >= event.ticketReleaseTime
-      ) {
-        return 'ONSALE'
-      }
-
-      // 判断时间处于event.startTime和event.endTime之间，返回ONSALE
-      else if (new Date() >= event.startTime && new Date() < event.endTime) {
-        return 'LIVE'
-      }
-      // 判断时间，超过event.endTime，返回ENDED
-      else if (new Date() >= event.endTime) {
-        return 'ENDED'
-      }
-    }
   }
 
   async getEventTicketTypes(eventId: string) {

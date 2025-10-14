@@ -11,10 +11,14 @@ import { Customer, CustomerStatus } from '@prisma/client'
 import { CustomerJwtUserData } from '../../../types'
 import { PrismaService } from '../../shared/prisma/prisma.service'
 import { CheckinDto } from './dto/checkin.dto'
+import { OrganizerService } from '../organizer/organizer.service'
 
 @Injectable()
 export class StaffService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly organizerService: OrganizerService
+  ) {}
   async assertValidEventStaff(customer: Customer, eventId: string) {
     if (!customer) {
       throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
@@ -84,7 +88,7 @@ export class StaffService {
 
   async events(user: CustomerJwtUserData) {
     const { customerId } = user
-    const events = await this.prisma.eventStaff.findMany({
+    const events: any[] = await this.prisma.eventStaff.findMany({
       where: {
         staffId: customerId,
       },
@@ -95,6 +99,14 @@ export class StaffService {
         createdAt: 'desc',
       },
     })
+    for (const staffEvent of events) {
+      staffEvent.event.stage = this.organizerService.getEventStage(
+        staffEvent.event
+      )
+      staffEvent.event.checkable = this.organizerService.getCheckable(
+        staffEvent.event
+      )
+    }
     return events
   }
 

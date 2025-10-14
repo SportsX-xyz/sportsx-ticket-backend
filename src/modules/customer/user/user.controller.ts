@@ -80,6 +80,20 @@ export class UserController {
     )
   }
 
+  @Post('unlist/:ticketId')
+  @ApiOperation({
+    summary: 'Unlist ticket',
+  })
+  async unlist(
+    @Req() req: FastifyRequest,
+    @Param('ticketId') ticketId: string
+  ) {
+    return this.userService.unlist(
+      req.user as unknown as CustomerJwtUserData,
+      ticketId
+    )
+  }
+
   @Get('resales')
   @ApiOperation({
     summary: 'Get current user resales',

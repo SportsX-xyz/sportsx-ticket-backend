@@ -317,9 +317,21 @@ export class OrganizerService {
     // 给每个event添加一个stage的计算属性
     for (let event of events) {
       event.stage = this.getEventStage(event)
+      event.checkable = this.getCheckable(event)
     }
 
     return events
+  }
+
+  getCheckable(event: Event) {
+    if (
+      new Date() >=
+        new Date(event.startTime.getTime() - event.checkInBefore * 60 * 1000) &&
+      new Date() < event.endTime
+    ) {
+      return true
+    }
+    return false
   }
 
   getEventStage(event: Event) {
@@ -334,12 +346,25 @@ export class OrganizerService {
       if (new Date() < event.ticketReleaseTime) {
         return 'PREVIEW'
       }
-      // 判断时间，小于event.startTime，大于 releaseTime，返回ONSALE
+      // 判断时间，小于停售时间，大于 releaseTime，返回ONSALE
       else if (
-        new Date() < event.startTime &&
+        new Date() <
+          new Date(
+            event.startTime.getTime() - event.stopSaleBefore * 60 * 1000
+          ) &&
         new Date() >= event.ticketReleaseTime
       ) {
         return 'ONSALE'
+      }
+      // 判断时间，大于停售时间，小于event.startTime，返回SALE_ENDED
+      else if (
+        new Date() >=
+          new Date(
+            event.startTime.getTime() - event.stopSaleBefore * 60 * 1000
+          ) &&
+        new Date() < event.startTime
+      ) {
+        return 'SALE_ENDED'
       }
 
       // 判断时间处于event.startTime和event.endTime之间，返回ONSALE
@@ -391,6 +416,7 @@ export class OrganizerService {
     event.maxRow = result._max.rowNumber
     event.maxColumn = result._max.columnNumber
     event.stage = this.getEventStage(event)
+    event.checkable = this.getCheckable(event)
 
     return event
   }
