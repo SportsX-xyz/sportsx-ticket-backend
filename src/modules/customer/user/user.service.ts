@@ -15,6 +15,7 @@ import {
   ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_SALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST,
+  ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT,
   ERROR_PRIVY_LOGIN_FAILED,
 } from '../../../constants/error-code'
 import { CustomerJwtUserData } from '../../../types'
@@ -283,6 +284,18 @@ export class UserService {
     }
 
     // TODO:验证，每个用户每个活动只能买一张票
+    const hasTicket = await this.prisma.eventTicket.findFirst({
+      where: {
+        eventId: ticket.eventId,
+        ownerId: customer.id,
+        status: {
+          in: [TicketStatus.SOLD, TicketStatus.USED, TicketStatus.RESALE],
+        },
+      },
+    })
+    if (hasTicket) {
+      throw new ApiException(ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT)
+    }
 
     // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
 
