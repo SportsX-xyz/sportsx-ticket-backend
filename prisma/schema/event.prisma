@@ -1,27 +1,30 @@
 model Event {
-  id                String            @id @default(uuid())
-  name              String            @db.VarChar(255)
-  address           String            @db.VarChar(255)
-  startTime         DateTime          @db.Timestamptz
-  endTime           DateTime          @db.Timestamptz
-  ticketReleaseTime DateTime          @db.Timestamptz
-  checkInBefore     Int               @default(0) // 活动开始前多少分钟开始检票入场
-  stopSaleBefore    Int               @default(0) // 活动开始前停止售票的分钟数
-  status            EventStatus       @default(DRAFT)
-  description       String?           @db.Text
-  resaleFeeRate     Int               @default(5)
-  maxResaleTimes    Int               @default(150)
-  eventAvatar       String?           @db.Text
-  coverImage        String?           @db.VarChar(255)
-  coverImageId      String?           @db.VarChar(255)
-  createdAt         DateTime          @default(now()) @db.Timestamptz
-  updatedAt         DateTime          @updatedAt @db.Timestamptz
-  customer          Customer          @relation(fields: [customerId], references: [id])
-  customerId        String
-  ipfsUri           String?           @db.VarChar(255)
-  tickets           EventTicket[] // 一对多关联
-  ticketTypes       EventTicketType[] // 一对多关联
-  staff             EventStaff[] // 新增：与 EventStaff 的关系
+  id                 String            @id @default(uuid())
+  name               String            @db.VarChar(255)
+  address            String            @db.VarChar(255)
+  startTime          DateTime          @db.Timestamptz
+  endTime            DateTime          @db.Timestamptz
+  ticketReleaseTime  DateTime          @db.Timestamptz
+  checkInBefore      Int               @default(0) // 活动开始前多少分钟开始检票入场
+  stopSaleBefore     Int               @default(0) // 活动开始前停止售票的分钟数
+  symbol             String?           @db.VarChar(255)
+  solanaTxHash       String?           @db.VarChar(255)
+  solanaEventAddress String?           @db.VarChar(255)
+  status             EventStatus       @default(DRAFT)
+  description        String?           @db.Text
+  resaleFeeRate      Int               @default(5)
+  maxResaleTimes     Int               @default(150)
+  eventAvatar        String?           @db.Text
+  coverImage         String?           @db.VarChar(255)
+  coverImageId       String?           @db.VarChar(255)
+  createdAt          DateTime          @default(now()) @db.Timestamptz
+  updatedAt          DateTime          @updatedAt @db.Timestamptz
+  customer           Customer          @relation(fields: [customerId], references: [id])
+  customerId         String
+  ipfsUri            String?           @db.VarChar(255)
+  tickets            EventTicket[] // 一对多关联
+  ticketTypes        EventTicketType[] // 一对多关联
+  staff              EventStaff[] // 新增：与 EventStaff 的关系
 }
 
 enum EventStatus {

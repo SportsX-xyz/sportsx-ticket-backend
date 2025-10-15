@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { Connection } from '@solana/web3.js'
 import { SolanaService } from './solana.service'
 import { SOLANA_CONNECTION } from './solana.constants'
+import * as anchor from '@coral-xyz/anchor'
 
 @Global()
 @Module({
@@ -11,11 +12,12 @@ import { SOLANA_CONNECTION } from './solana.constants'
     {
       provide: SOLANA_CONNECTION,
       useFactory: (configService: ConfigService) => {
-        const rpcUrl = configService.get<string>('SOLANA_RPC_URL')
-        if (!rpcUrl) {
-          throw new Error('SOLANA_RPC_URL is not defined in .env')
-        }
-        return new Connection(rpcUrl, 'confirmed')
+        const connection = new anchor.web3.Connection(
+          configService.get('ANCHOR_PROVIDER_URL'),
+          'confirmed'
+        )
+
+        return connection
       },
       inject: [ConfigService],
     },

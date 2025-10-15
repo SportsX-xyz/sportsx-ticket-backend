@@ -122,4 +122,13 @@ export class CreateEventDto {
     }),
   })
   maxResaleTimes: number
+
+  @ApiProperty({ description: 'Symbol' })
+  @IsNotEmpty({
+    message: i18nValidationMessage('validation.notEmpty', {
+      field: 'symbol',
+    }),
+  })
+  @IsString()
+  symbol: string
 }

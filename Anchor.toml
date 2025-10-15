@@ -1,0 +1,12 @@
+[programs.localnet]
+ticketing_program = "tDdGYG37gZufntQqs7ZPuiSRyrceNP5ZdygqVQLjUGw"
+
+[programs.devnet]
+ticketing_program = "tDdGYG37gZufntQqs7ZPuiSRyrceNP5ZdygqVQLjUGw"
+
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "devnet"

@@ -9,13 +9,16 @@ import {
   ERROR_EVENT_ACTIVE,
   ERROR_EVENT_AVATAR_INVALID,
   ERROR_EVENT_AVATAR_NOT_FOUND,
+  ERROR_EVENT_IPFS_URI_NOT_FOUND,
   ERROR_EVENT_NOT_BELONG_TO_YOU,
   ERROR_EVENT_NOT_FOUND,
   ERROR_EVENT_PINATA_AVATAR_DUPLICATE,
   ERROR_EVENT_PINATA_AVATAR_INVALID,
   ERROR_EVENT_PINATA_JSON_DUPLICATE,
   ERROR_EVENT_PINATA_JSON_INVALID,
+  ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND,
   ERROR_EVENT_STAFF_ALREADY_EXISTS,
+  ERROR_EVENT_SYMBOL_NOT_FOUND,
   ERROR_EVENT_TICKET_NOT_FOUND,
   ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE,
   ERROR_EVENT_TICKET_TYPE_HAS_TICKETS,
@@ -44,12 +47,14 @@ import { PreviewEventDto } from './dto/preview-event.dto'
 import { UpdateEventTicketTypeDto } from './dto/update-event-ticket-type.dto'
 import { PinataSDK } from 'pinata'
 import { ConfigService } from '@nestjs/config'
+import { SolanaService } from '@/modules/shared/solana/solana.service'
 
 @Injectable()
 export class OrganizerService {
   constructor(
     private readonly prisma: PrismaService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private readonly solanaService: SolanaService
   ) {}
 
   async uploadEventJsonToPinata(event, avatarCid: string) {
@@ -248,6 +253,7 @@ export class OrganizerService {
       eventAvatar,
       resaleFeeRate,
       maxResaleTimes,
+      symbol,
     } = dto
     const customer = await this.prisma.customer.findUnique({
       where: {
@@ -278,6 +284,7 @@ export class OrganizerService {
         eventAvatar: eventAvatar || null,
         resaleFeeRate,
         maxResaleTimes,
+        symbol,
         customer: {
           connect: {
             id: customerId,
@@ -540,6 +547,20 @@ export class OrganizerService {
 
     if (event.status !== EventStatus.PREVIEW) {
       throw new ApiException(ERROR_EVENT_UPDATE_NOT_ALLOWED)
+    }
+
+    if (!event.ipfsUri) {
+      throw new ApiException(ERROR_EVENT_IPFS_URI_NOT_FOUND)
+    }
+
+    if (!event.symbol) {
+      throw new ApiException(ERROR_EVENT_SYMBOL_NOT_FOUND)
+    }
+
+    const updatedEvent = await this.solanaService.createEvent(event.id)
+
+    if (!updatedEvent.solanaTxHash) {
+      throw new ApiException(ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND)
     }
 
     return this.prisma.event.update({

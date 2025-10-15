@@ -9,23 +9,95 @@ import {
   SystemProgram,
   sendAndConfirmTransaction,
 } from '@solana/web3.js'
-import { SOLANA_CONNECTION } from './solana.constants'
+import { TicketingProgram } from './types/ticketing-program'
+import { Program, BN } from '@coral-xyz/anchor'
+import * as anchor from '@coral-xyz/anchor'
+import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
 export class SolanaService {
-  private readonly contractAddress: PublicKey
+  private readonly connection: Connection
+  private readonly platformAuthority: PublicKey
+  private readonly program: Program<TicketingProgram>
+  private readonly provider: anchor.AnchorProvider
+  private readonly platformConfigPDA: PublicKey
 
   constructor(
-    @Inject(SOLANA_CONNECTION) private readonly connection: Connection,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService
   ) {
-    const contractAddress = this.configService.get<string>(
-      'SOLANA_CONTRACT_ADDRESS'
+    this.provider = anchor.AnchorProvider.env()
+    anchor.setProvider(this.provider)
+
+    this.program = anchor.workspace
+      .TicketingProgram as Program<TicketingProgram>
+    this.connection = this.provider.connection
+    this.platformAuthority = this.provider.wallet.publicKey
+
+    // Derive platform config PDA
+    const [platformConfigPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('PLATFORM_CONFIG')],
+      this.program.programId
     )
-    if (!contractAddress) {
-      throw new Error('SOLANA_CONTRACT_ADDRESS is not defined in .env')
+    this.platformConfigPDA = platformConfigPDA
+  }
+
+  async createEvent(eventId: string) {
+    const event = await this.prisma.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    })
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: event.customerId,
+      },
+    })
+    const merchantPublicKey = new PublicKey(customer.walletId)
+    console.log('1')
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('EVENT'), Buffer.from(eventId.replace(/-/g, ''))],
+      this.program.programId
+    )
+    console.log('2')
+
+    const tx = await this.program.methods
+      .createEvent(
+        eventId.replace(/-/g, ''),
+        event.ipfsUri,
+        merchantPublicKey,
+        event.name,
+        event.symbol,
+        new BN(event.endTime.getTime() / 1000) // tomorrow
+      )
+      .accounts({
+        payer: this.provider.wallet.publicKey,
+        // @ts-ignore
+        event: eventPDA,
+        platformConfig: this.platformConfigPDA,
+        platformAuthority: this.platformAuthority,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc()
+
+    console.log('3')
+    if (tx) {
+      return await this.prisma.event.update({
+        where: {
+          id: eventId,
+        },
+        data: {
+          solanaTxHash: tx,
+          solanaEventAddress: eventPDA.toBase58(),
+        },
+      })
     }
-    this.contractAddress = new PublicKey(contractAddress)
+    return event
+
+    // console.log('Event created:', tx)
+    // console.log('eventPDA', eventPDA)
+    // const eventInfo = await this.program.account.events.fetch(eventPDA)
+    // console.log('Event created:', eventInfo)
   }
 
   /**
@@ -33,13 +105,6 @@ export class SolanaService {
    */
   getConnection(): Connection {
     return this.connection
-  }
-
-  /**
-   * 获取合约地址
-   */
-  getContractAddress(): PublicKey {
-    return this.contractAddress
   }
 
   /**
@@ -67,47 +132,4 @@ export class SolanaService {
       throw new Error(`Failed to get balance: ${error.message}`)
     }
   }
-
-  /**
-   * 示例方法：发送 SOL 交易
-   * @param toPublicKey 接收方的公钥
-   * @param amount 要发送的 SOL 数量
-   */
-  async sendSol(toPublicKey: string, amount: number): Promise<string> {
-    const privateKey = this.configService.get<string>('SOLANA_PRIVATE_KEY')
-    if (!privateKey) {
-      throw new Error('SOLANA_PRIVATE_KEY is not defined in .env')
-    }
-
-    try {
-      const fromKeypair = Keypair.fromSecretKey(
-        Buffer.from(privateKey, 'base64')
-      )
-      const toPubKey = new PublicKey(toPublicKey)
-      const lamports = amount * 1e9 // 转换为 lamports
-
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: fromKeypair.publicKey,
-          toPubkey: toPubKey,
-          lamports,
-        })
-      )
-
-      const signature = await sendAndConfirmTransaction(
-        this.connection,
-        transaction,
-        [fromKeypair]
-      )
-      return signature
-    } catch (error) {
-      throw new Error(`Failed to send SOL: ${error.message}`)
-    }
-  }
-
-  // TODO: 添加与你的 Solana 合约交互的具体方法
-  // async callContractMethod(params: any): Promise<any> {
-  //   // 在这里实现与你的 Solana 程序（合约）的交互逻辑
-  //   // 使用 @solana/web3.js 和你的程序 IDL
-  // }
 }

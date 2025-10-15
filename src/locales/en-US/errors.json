@@ -38,5 +38,8 @@
   "event.pinata.avatar.invalid": "Event pinata avatar invalid",
   "event.pinata.json.invalid": "Event pinata json invalid",
   "event.ticket.not.ready.for.unlist": "Event ticket not ready for unlist",
-  "event.ticket.only.one.per.event": "Event ticket only one per event"
+  "event.ticket.only.one.per.event": "Event ticket only one per event",
+  "event.ipfs.uri.not.found": "Event ipfs uri not found",
+  "event.solana.tx.hash.not.found": "Event solana tx hash not found",
+  "event.symbol.not.found": "Event symbol not found"
 }

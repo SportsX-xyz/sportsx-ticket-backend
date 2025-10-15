@@ -41,6 +41,9 @@ export const ERROR_EVENT_PINATA_AVATAR_INVALID = 22024
 export const ERROR_EVENT_PINATA_JSON_INVALID = 22025
 export const ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST = 22026
 export const ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT = 22027
+export const ERROR_EVENT_IPFS_URI_NOT_FOUND = 22028
+export const ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND = 22029
+export const ERROR_EVENT_SYMBOL_NOT_FOUND = 22030
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -96,4 +99,7 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST]:
     'event.ticket.not.ready.for.unlist',
   [ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT]: 'event.ticket.only.one.per.event',
+  [ERROR_EVENT_IPFS_URI_NOT_FOUND]: 'event.ipfs.uri.not.found',
+  [ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND]: 'event.solana.tx.hash.not.found',
+  [ERROR_EVENT_SYMBOL_NOT_FOUND]: 'event.symbol.not.found',
 }
