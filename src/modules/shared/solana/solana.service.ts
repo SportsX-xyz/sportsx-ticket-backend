@@ -8,11 +8,27 @@ import {
   Transaction,
   SystemProgram,
   sendAndConfirmTransaction,
+  SYSVAR_RENT_PUBKEY,
+  LAMPORTS_PER_SOL,
+  TransactionConfirmationStrategy,
 } from '@solana/web3.js'
 import { TicketingProgram } from './types/ticketing-program'
 import { Program, BN } from '@coral-xyz/anchor'
 import * as anchor from '@coral-xyz/anchor'
 import { PrismaService } from '../prisma/prisma.service'
+import { ApiException } from '../../../exceptions/api.exception'
+import {
+  ERROR_EVENT_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_FOUND,
+} from '../../../constants/error-code'
+import {
+  TOKEN_PROGRAM_ID,
+  createMint,
+  createAssociatedTokenAccountInstruction,
+  createInitializeMintInstruction,
+  getAssociatedTokenAddress,
+  mintTo,
+} from '@solana/spl-token'
 
 @Injectable()
 export class SolanaService {
@@ -40,6 +56,245 @@ export class SolanaService {
       this.program.programId
     )
     this.platformConfigPDA = platformConfigPDA
+  }
+
+  async purchaseAndMint(userCustomerId: string, ticketId: string) {
+    const userCustomer = await this.prisma.customer.findUnique({
+      where: {
+        id: userCustomerId,
+      },
+    })
+
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+      include: {
+        event: true,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+
+    // const userPublicKey = new PublicKey(userCustomer.walletId)
+    const fakeUser = Keypair.generate()
+    // await this.connection.requestAirdrop(fakeUser.publicKey, LAMPORTS_PER_SOL)
+    let ticketMintKeypair = Keypair.generate()
+    let ticketMint = ticketMintKeypair.publicKey
+
+    const usdtMint = await createMint(
+      this.connection,
+      this.provider.wallet.payer,
+      this.provider.wallet.publicKey, // mint authority
+      null,
+      6 // USDT decimals
+    )
+
+    const [userUSDTATA] = PublicKey.findProgramAddressSync(
+      [usdtMint.toBuffer(), fakeUser.publicKey.toBuffer()],
+      TOKEN_PROGRAM_ID
+    )
+
+    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
+      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
+      TOKEN_PROGRAM_ID
+    )
+
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+      this.program.programId
+    )
+
+    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('TICKET'),
+        Buffer.from(ticketId.replace(/-/g, '')),
+        eventPDA.toBuffer(),
+      ],
+      this.program.programId
+    )
+
+    // 获取 recentBlockhash（重要：前端必须在有效期内使用）
+    const { blockhash, lastValidBlockHeight } =
+      await this.connection.getLatestBlockhash('confirmed')
+
+    // 创建交易
+    const tx = new Transaction()
+    tx.recentBlockhash = blockhash
+    tx.feePayer = fakeUser.publicKey
+
+    const purchaseAndMintInstruction = await this.program.methods
+      .purchaseAndMint(
+        new anchor.BN(10 * 1e6), // $10 USDT
+        ticket.id.replace(/-/g, ''),
+        ticket.event.id.replace(/-/g, ''),
+        `${ticket.rowNumber}-${ticket.columnNumber}`
+      )
+      .accounts({
+        user: fakeUser.publicKey,
+        platformAuthority: this.platformAuthority,
+        usdtMint,
+        userUsdtAta: userUSDTATA,
+        platformUsdtVault: platformUSDTATA,
+        merchantUsdtVault: Keypair.generate().publicKey, // mock
+        ticketMint,
+        // @ts-ignore
+        userNftAta: Keypair.generate().publicKey,
+        mintAuthority: Keypair.generate().publicKey,
+        seatAccount: seatAccountPDA,
+        event: eventPDA,
+        platformConfig: this.platformConfigPDA,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+      })
+      .instruction()
+
+    tx.add(purchaseAndMintInstruction)
+
+    // tx.partialSign(fakeUser, this.provider.wallet.payer, ticketMintKeypair)
+
+    tx.partialSign(fakeUser)
+    tx.partialSign(this.provider.wallet.payer)
+    tx.partialSign(ticketMintKeypair)
+
+    const signature = await this.connection.sendRawTransaction(tx.serialize())
+    const strategy = {
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+      commitment: 'confirmed',
+    } as TransactionConfirmationStrategy
+
+    const response = await this.connection.confirmTransaction(strategy)
+
+    // const response = await this.provider.sendAndConfirm(tx, [
+    //   fakeUser,
+    //   this.provider.wallet.payer,
+    //   ticketMintKeypair,
+    // ])
+    return response
+  }
+
+  async mintPartialSign(userCustomerId: string, ticketId: string) {
+    const userCustomer = await this.prisma.customer.findUnique({
+      where: {
+        id: userCustomerId,
+      },
+    })
+
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+      include: {
+        event: true,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+
+    const userPublicKey = new PublicKey(userCustomer.walletId)
+    let ticketMintKeypair = Keypair.generate()
+    let ticketMint = ticketMintKeypair.publicKey
+
+    const usdtMint = await createMint(
+      this.connection,
+      this.provider.wallet.payer,
+      this.provider.wallet.publicKey, // mint authority
+      null,
+      6 // USDT decimals
+    )
+
+    const [userUSDTATA] = PublicKey.findProgramAddressSync(
+      [usdtMint.toBuffer(), userPublicKey.toBuffer()],
+      TOKEN_PROGRAM_ID
+    )
+
+    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
+      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
+      TOKEN_PROGRAM_ID
+    )
+
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+      this.program.programId
+    )
+
+    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('TICKET'),
+        Buffer.from(ticketId.replace(/-/g, '')),
+        eventPDA.toBuffer(),
+      ],
+      this.program.programId
+    )
+
+    // 获取 recentBlockhash（重要：前端必须在有效期内使用）
+    const { blockhash, lastValidBlockHeight } =
+      await this.connection.getLatestBlockhash('confirmed')
+
+    // 创建交易
+    const tx = new Transaction()
+    tx.recentBlockhash = blockhash
+    tx.feePayer = userPublicKey
+
+    const purchaseAndMintInstruction = await this.program.methods
+      .purchaseAndMint(
+        new anchor.BN(10 * 1e6), // $10 USDT
+        ticket.id.replace(/-/g, ''),
+        ticket.event.id.replace(/-/g, ''),
+        `${ticket.rowNumber}-${ticket.columnNumber}`
+      )
+      .accounts({
+        user: userPublicKey,
+        platformAuthority: this.platformAuthority,
+        usdtMint,
+        userUsdtAta: userUSDTATA,
+        platformUsdtVault: platformUSDTATA,
+        merchantUsdtVault: Keypair.generate().publicKey, // mock
+        ticketMint,
+        // @ts-ignore
+        userNftAta: Keypair.generate().publicKey,
+        mintAuthority: Keypair.generate().publicKey,
+        seatAccount: seatAccountPDA,
+        event: eventPDA,
+        platformConfig: this.platformConfigPDA,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+      })
+      .instruction()
+
+    tx.add(purchaseAndMintInstruction)
+
+    tx.partialSign(this.provider.wallet.payer)
+    tx.partialSign(ticketMintKeypair)
+
+    // 序列化交易消息（不包含签名），供前端部分签名
+    const serializedTx = tx
+      .serialize({
+        requireAllSignatures: false,
+        verifySignatures: false,
+      })
+      .toString('base64')
+    // const serializedBlockhash = blockhash
+    // const lastValidBlockHeightNum = lastValidBlockHeight
+
+    // 返回给前端的数据
+    // const response = {
+    //   serializedTransaction: serializedTx,
+    //   blockhash: serializedBlockhash,
+    //   lastValidBlockHeight: lastValidBlockHeightNum,
+    //   usdtMint: usdtMint.toString(),
+    //   ticketMint: ticketMint.toString(),
+    // }
+
+    return serializedTx
   }
 
   async createEvent(eventId: string) {

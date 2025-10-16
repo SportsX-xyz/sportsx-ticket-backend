@@ -31,6 +31,7 @@ import { StaffService } from '../staff/staff.service'
 import { Prisma } from '@prisma/client'
 import { ResaleDto } from './dto/resale.dto'
 import { ManageService } from '../manage/manage.service'
+import { SolanaService } from '@/modules/shared/solana/solana.service'
 
 @Injectable()
 export class UserService {
@@ -43,7 +44,8 @@ export class UserService {
     private readonly jwtService: JwtService,
     private readonly organizerService: OrganizerService,
     private readonly staffService: StaffService,
-    private readonly manageService: ManageService
+    private readonly manageService: ManageService,
+    private readonly solanaService: SolanaService
   ) {
     const appId = this.configService.get('PRIVY_APP_ID')
     const appSecret = this.configService.get('PRIVY_APP_SECRET')
@@ -325,19 +327,22 @@ export class UserService {
     // }
 
     // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
+    const partialSignedTx = await this.solanaService.mintPartialSign(
+      customerId,
+      ticketId
+    )
 
     // TODO: 应该使用事务的方式
+    // await this.prisma.eventTicket.update({
+    //   where: {
+    //     id: ticket.id,
+    //   },
+    //   data: {
+    //     status: TicketStatus.LOCK,
+    //   },
+    // })
 
-    await this.prisma.eventTicket.update({
-      where: {
-        id: ticket.id,
-      },
-      data: {
-        status: TicketStatus.LOCK,
-      },
-    })
-
-    const order = await this.prisma.eventTicketOrder.create({
+    const order: any = await this.prisma.eventTicketOrder.create({
       data: {
         ticketId: ticket.id,
         buyerId: customer.id,
@@ -345,6 +350,8 @@ export class UserService {
         price: ticket.price,
       },
     })
+
+    order.partialSignedTx = partialSignedTx
 
     return order
   }
