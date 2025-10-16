@@ -11,6 +11,8 @@ WORKDIR /app
 COPY prisma ./prisma
 RUN pnpm prisma:generate
 COPY . .
+RUN mkdir -p .config/solana
+COPY .config/solana/id.json .config/solana/id.json
 RUN pnpm run build
 
 FROM node:20-alpine AS run
