@@ -52,3 +52,6 @@ lerna-debug.log*
 .nestjs_repl_history
 /data
 docker-compose.yml
+
+#solana key
+.config/*

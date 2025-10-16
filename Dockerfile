@@ -12,7 +12,6 @@ COPY prisma ./prisma
 RUN pnpm prisma:generate
 COPY . .
 RUN mkdir -p .config/solana
-COPY .config/solana/id.json .config/solana/id.json
 RUN pnpm run build
 
 FROM node:20-alpine AS run
@@ -27,6 +26,8 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/.config ./config
+COPY --from=build /app/Anchor.toml ./Anchor.toml
+COPY --from=build /app/target ./target
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 EXPOSE 4000
