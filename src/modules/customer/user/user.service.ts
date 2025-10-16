@@ -327,7 +327,7 @@ export class UserService {
     // }
 
     // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
-    const partialSignedTx = await this.solanaService.mintPartialSign(
+    const partialSignedTransaction = await this.solanaService.mintPartialSign(
       customerId,
       ticketId
     )
@@ -351,7 +351,7 @@ export class UserService {
       },
     })
 
-    order.partialSignedTx = partialSignedTx
+    order.partialSignedTransaction = partialSignedTransaction
 
     return order
   }
