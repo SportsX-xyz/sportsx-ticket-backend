@@ -54,12 +54,10 @@ export class SolanaService {
       },
     })
     const merchantPublicKey = new PublicKey(customer.walletId)
-    console.log('1')
     const [eventPDA] = PublicKey.findProgramAddressSync(
       [Buffer.from('EVENT'), Buffer.from(eventId.replace(/-/g, ''))],
       this.program.programId
     )
-    console.log('2')
 
     const tx = await this.program.methods
       .createEvent(
@@ -80,7 +78,6 @@ export class SolanaService {
       })
       .rpc()
 
-    console.log('3')
     if (tx) {
       return await this.prisma.event.update({
         where: {
