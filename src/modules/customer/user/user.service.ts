@@ -32,6 +32,7 @@ import { Prisma } from '@prisma/client'
 import { ResaleDto } from './dto/resale.dto'
 import { ManageService } from '../manage/manage.service'
 import { SolanaService } from '@/modules/shared/solana/solana.service'
+import { PayDto } from './dto/pay.dto'
 
 @Injectable()
 export class UserService {
@@ -458,8 +459,10 @@ export class UserService {
     })
   }
 
-  async pay(user: CustomerJwtUserData, orderId: string) {
+  async pay(user: CustomerJwtUserData, orderId: string, dto: PayDto) {
     const { customerId } = user
+    const { txHash, nftToken } = dto
+
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
@@ -484,7 +487,8 @@ export class UserService {
       },
     })
 
-    // TODO: 支付业务逻辑
+    // TODO: 验证 txHash
+    // TODO: 验证 nftToken
 
     // 修改订单状态
     let updatedOrder = await this.prisma.eventTicketOrder.update({
@@ -493,6 +497,7 @@ export class UserService {
       },
       data: {
         status: OrderStatus.PAID,
+        txHash,
       },
     })
 
@@ -506,6 +511,12 @@ export class UserService {
       },
     })
 
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: order.ticketId,
+      },
+    })
+
     // TODO: 更新ticket，的ownerId, lastOrderId
     await this.prisma.eventTicket.update({
       where: {
@@ -516,6 +527,7 @@ export class UserService {
         resaleTimes: order.ticket.resaleTimes + 1,
         ownerId: customer.id,
         lastOrderId: order.id,
+        nftTokenId: ticket.nftTokenId ? ticket.nftTokenId : nftToken,
       },
     })
     // TODO: 计算分账？

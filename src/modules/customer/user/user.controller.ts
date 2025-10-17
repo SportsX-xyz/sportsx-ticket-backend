@@ -13,6 +13,7 @@ import { UserService } from './user.service'
 import { ApiTags } from '@nestjs/swagger'
 import { CustomerJwtUserData } from '../../../types'
 import { ResaleDto } from './dto/resale.dto'
+import { PayDto } from './dto/pay.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('customer')
@@ -140,10 +141,15 @@ export class UserController {
   @ApiOperation({
     summary: 'Pay order',
   })
-  async pay(@Req() req: FastifyRequest, @Param('orderId') orderId: string) {
+  async pay(
+    @Req() req: FastifyRequest,
+    @Param('orderId') orderId: string,
+    @Body() dto: PayDto
+  ) {
     return this.userService.pay(
       req.user as unknown as CustomerJwtUserData,
-      orderId
+      orderId,
+      dto
     )
   }
 }
