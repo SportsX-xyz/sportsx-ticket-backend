@@ -65,6 +65,16 @@ export class UserController {
     return this.userService.tickets(req.user as unknown as CustomerJwtUserData)
   }
 
+  @Get('upcoming-tickets')
+  @ApiOperation({
+    summary: 'Get current user upcoming tickets',
+  })
+  async upcomingTickets(@Req() req: FastifyRequest) {
+    return this.userService.upcomingTickets(
+      req.user as unknown as CustomerJwtUserData
+    )
+  }
+
   @Post('resale/:ticketId')
   @ApiOperation({
     summary: 'Resale ticket',

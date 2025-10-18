@@ -247,7 +247,66 @@ export class UserService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        event: {
+          startTime: 'desc',
+        },
+      },
+    })
+  }
+
+  // upcoming tickets 跟 tickets 的区别是，只返回 status 为 SOLD 的 ticket
+  async upcomingTickets(user: CustomerJwtUserData) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+
+    return this.prisma.eventTicket.findMany({
+      select: {
+        id: true,
+        event: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            description: true,
+            startTime: true,
+            endTime: true,
+          },
+        },
+        ticketType: {
+          select: {
+            id: true,
+            tierName: true,
+          },
+        },
+        lastOrder: {
+          select: {
+            id: true,
+            price: true,
+            txHash: true,
+            createdAt: true,
+          },
+        },
+        name: true,
+        status: true,
+        price: true,
+        rowNumber: true,
+        columnNumber: true,
+      },
+      where: {
+        ownerId: customer.id,
+        status: {
+          in: [TicketStatus.SOLD],
+        },
+      },
+      orderBy: {
+        event: {
+          startTime: 'desc',
+        },
       },
     })
   }
