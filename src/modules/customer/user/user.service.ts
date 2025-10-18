@@ -11,11 +11,16 @@ import {
   ERROR_CUSTOMER_NOT_ACTIVE,
   ERROR_CUSTOMER_NOT_FOUND,
   ERROR_EVENT_TICKET_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_LOCK,
   ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER,
   ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_SALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST,
   ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT,
+  ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN,
+  ERROR_EVENT_TICKET_ORDER_NOT_BUYER,
+  ERROR_EVENT_TICKET_ORDER_NOT_FOUND,
+  ERROR_EVENT_TICKET_ORDER_NOT_NEW,
   ERROR_PRIVY_LOGIN_FAILED,
 } from '../../../constants/error-code'
 import { CustomerJwtUserData } from '../../../types'
@@ -459,7 +464,7 @@ export class UserService {
     })
   }
 
-  async pay(user: CustomerJwtUserData, orderId: string, dto: PayDto) {
+  async updateOrder(user: CustomerJwtUserData, orderId: string, dto: PayDto) {
     const { customerId } = user
     const { txHash, nftToken } = dto
 
@@ -501,23 +506,12 @@ export class UserService {
       },
     })
 
-    // 修改订单状态 TO TRANSFERED
-    updatedOrder = await this.prisma.eventTicketOrder.update({
-      where: {
-        id: orderId,
-      },
-      data: {
-        status: OrderStatus.TRANSFERED,
-      },
-    })
-
     const ticket = await this.prisma.eventTicket.findUnique({
       where: {
         id: order.ticketId,
       },
     })
 
-    // TODO: 更新ticket，的ownerId, lastOrderId
     await this.prisma.eventTicket.update({
       where: {
         id: order.ticketId,
@@ -530,7 +524,65 @@ export class UserService {
         nftTokenId: ticket.nftTokenId ? ticket.nftTokenId : nftToken,
       },
     })
-    // TODO: 计算分账？
+
+    // 修改订单状态 TO TRANSFERED
+    updatedOrder = await this.prisma.eventTicketOrder.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.TRANSFERED,
+      },
+    })
     return updatedOrder
+  }
+
+  // 当用户首次checkout之后，票被LOCK，此时其他用户无法再买这张票，但是用户自己如果取消了支付，
+  // 也无法再通过checkout支付，所以这里是继续支付的意思，是要返回和checkout一样的结果，但是只有
+  // 当前用户自己可以支付
+  async pay(user: CustomerJwtUserData, orderId: string) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const order: any = await this.prisma.eventTicketOrder.findUnique({
+      where: {
+        id: orderId,
+      },
+    })
+    if (!order) {
+      throw new ApiException(ERROR_EVENT_TICKET_ORDER_NOT_FOUND)
+    }
+    if (order.status !== OrderStatus.NEW) {
+      throw new ApiException(ERROR_EVENT_TICKET_ORDER_NOT_NEW)
+    }
+    if (order.buyerId !== customer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_ORDER_NOT_BUYER)
+    }
+    if (order.txHash) {
+      throw new ApiException(ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN)
+    }
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: order.ticketId,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    // 这个逻辑存在是需要跟checkout是否LOCK Ticket有关。
+    // if (ticket.status !== TicketStatus.LOCK) {
+    //   throw new ApiException(ERROR_EVENT_TICKET_NOT_LOCK)
+    // }
+
+    const partialSignedTransaction = await this.solanaService.mintPartialSign(
+      customerId,
+      ticket.id
+    )
+    order.partialSignedTransaction = partialSignedTransaction
+    return order
   }
 }

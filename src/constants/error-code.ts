@@ -44,6 +44,11 @@ export const ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT = 22027
 export const ERROR_EVENT_IPFS_URI_NOT_FOUND = 22028
 export const ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND = 22029
 export const ERROR_EVENT_SYMBOL_NOT_FOUND = 22030
+export const ERROR_EVENT_TICKET_ORDER_NOT_FOUND = 22031
+export const ERROR_EVENT_TICKET_ORDER_NOT_NEW = 22032
+export const ERROR_EVENT_TICKET_ORDER_NOT_BUYER = 22033
+export const ERROR_EVENT_TICKET_NOT_LOCK = 22034
+export const ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN = 22035
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -102,4 +107,10 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_IPFS_URI_NOT_FOUND]: 'event.ipfs.uri.not.found',
   [ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND]: 'event.solana.tx.hash.not.found',
   [ERROR_EVENT_SYMBOL_NOT_FOUND]: 'event.symbol.not.found',
+  [ERROR_EVENT_TICKET_ORDER_NOT_FOUND]: 'event.ticket.order.not.found',
+  [ERROR_EVENT_TICKET_ORDER_NOT_NEW]: 'event.ticket.order.not.new',
+  [ERROR_EVENT_TICKET_ORDER_NOT_BUYER]: 'event.ticket.order.not.buyer',
+  [ERROR_EVENT_TICKET_NOT_LOCK]: 'event.ticket.not.lock',
+  [ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN]:
+    'event.ticket.order.already.on.chain',
 }

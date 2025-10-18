@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Req } from '@nestjs/common'
+import { Controller, Get, Param, Post, Req, Put } from '@nestjs/common'
 import { UseGuards } from '@nestjs/common'
 import { CustomerAuthGuard } from '../core/guards/customer-auth.guard'
 import { Public } from '../core/decorators'
@@ -137,19 +137,30 @@ export class UserController {
     )
   }
 
-  @Post('pay/:orderId')
+  @Put('order/:orderId')
   @ApiOperation({
-    summary: 'Pay order',
+    summary: 'Update order',
   })
-  async pay(
+  async updateOrder(
     @Req() req: FastifyRequest,
     @Param('orderId') orderId: string,
     @Body() dto: PayDto
   ) {
-    return this.userService.pay(
+    return this.userService.updateOrder(
       req.user as unknown as CustomerJwtUserData,
       orderId,
       dto
+    )
+  }
+
+  @Post('pay/:orderId')
+  @ApiOperation({
+    summary: 'Pay order',
+  })
+  async pay(@Req() req: FastifyRequest, @Param('orderId') orderId: string) {
+    return this.userService.pay(
+      req.user as unknown as CustomerJwtUserData,
+      orderId
     )
   }
 }
