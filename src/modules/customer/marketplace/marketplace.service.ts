@@ -156,6 +156,7 @@ export class MarketplaceService {
       select: {
         id: true,
         tierName: true,
+        tierPrice: true,
         color: true,
       },
     })
