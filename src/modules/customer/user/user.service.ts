@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config'
 import { PrivyClient } from '@privy-io/server-auth'
 import { PrismaService } from '@/modules/shared/prisma/prisma.service'
 import { Inject } from '@nestjs/common'
-import { CUSTOMER_JWT_SERVICE } from '../auth/auth.module'
+import {
+  CUSTOMER_JWT_CHECKIN_SERVICE,
+  CUSTOMER_JWT_SERVICE,
+} from '../auth/auth.module'
 import { JwtService } from '@nestjs/jwt'
 import { ApiException } from '../../../exceptions/api.exception'
 import {
@@ -16,6 +19,7 @@ import {
   ERROR_EVENT_TICKET_NOT_READY_FOR_RESALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_SALE,
   ERROR_EVENT_TICKET_NOT_READY_FOR_UNLIST,
+  ERROR_EVENT_TICKET_NOT_SOLD,
   ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT,
   ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN,
   ERROR_EVENT_TICKET_ORDER_NOT_BUYER,
@@ -48,6 +52,8 @@ export class UserService {
     private readonly prisma: PrismaService,
     @Inject(CUSTOMER_JWT_SERVICE)
     private readonly jwtService: JwtService,
+    @Inject(CUSTOMER_JWT_CHECKIN_SERVICE)
+    private readonly checkInJwtService: JwtService,
     private readonly organizerService: OrganizerService,
     private readonly staffService: StaffService,
     private readonly manageService: ManageService,
@@ -643,5 +649,35 @@ export class UserService {
     )
     order.partialSignedTransaction = partialSignedTransaction
     return order
+  }
+
+  // 使用jwt的方式，签一个加密串，然后闸机那边可以验证这个串进行验票
+  async checkIn(user: CustomerJwtUserData, ticketId: string) {
+    const { customerId } = user
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    this.assertValidCustomer(customer)
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    if (ticket.ownerId !== customer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER)
+    }
+    if (ticket.status !== TicketStatus.SOLD) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_SOLD)
+    }
+
+    return this.checkInJwtService.sign({
+      ticketId: ticket.id,
+      customerId: customer.id,
+    })
   }
 }

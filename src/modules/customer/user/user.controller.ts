@@ -173,4 +173,18 @@ export class UserController {
       orderId
     )
   }
+
+  @Get('check-in/:ticketId')
+  @ApiOperation({
+    summary: 'Check in ticket',
+  })
+  async checkIn(
+    @Req() req: FastifyRequest,
+    @Param('ticketId') ticketId: string
+  ) {
+    return this.userService.checkIn(
+      req.user as unknown as CustomerJwtUserData,
+      ticketId
+    )
+  }
 }

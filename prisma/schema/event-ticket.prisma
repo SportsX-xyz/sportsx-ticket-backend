@@ -24,6 +24,7 @@ model EventTicket {
   lastOrder     EventTicketOrder?  @relation(fields: [lastOrderId], references: [id], name: "TicketLastOrder")
   staffId       String?
   staff         Customer?          @relation(fields: [staffId], references: [id], name: "TicketCheckInStaff")
+  checkInAt     DateTime?          @db.Timestamptz
 }
 
 enum TicketStatus {

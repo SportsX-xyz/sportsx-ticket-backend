@@ -384,4 +384,20 @@ export class SolanaService {
       throw new Error(`Failed to get balance: ${error.message}`)
     }
   }
+
+  async verifyTransaction(txHash: string) {
+    const userAddress = 'DMM8kr6jQkGF4ff5sDSQ9bjyZCgERCtJPXTgvpsj9LCK'
+    const tx = await this.connection.getTransaction(txHash, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    })
+
+    const customerPubkey = new PublicKey(userAddress)
+    console.log(tx.transaction.message.staticAccountKeys)
+    const isSigner = tx.transaction.message.staticAccountKeys.some((key) =>
+      key.equals(customerPubkey)
+    )
+    console.log('isSigner', isSigner)
+    // return tx
+  }
 }

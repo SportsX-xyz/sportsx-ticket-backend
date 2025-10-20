@@ -4,20 +4,27 @@ import {
   ERROR_CUSTOMER_NOT_FOUND,
   ERROR_EVENT_ENDED,
   ERROR_EVENT_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_FOUND,
+  ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER,
+  ERROR_EVENT_TICKET_NOT_SOLD,
 } from '@/constants/error-code'
 import { ApiException } from '@/exceptions/api.exception'
-import { Injectable } from '@nestjs/common'
-import { Customer, CustomerStatus } from '@prisma/client'
+import { Injectable, Inject } from '@nestjs/common'
+import { Customer, CustomerStatus, TicketStatus } from '@prisma/client'
 import { CustomerJwtUserData } from '../../../types'
 import { PrismaService } from '../../shared/prisma/prisma.service'
 import { CheckinDto } from './dto/checkin.dto'
 import { OrganizerService } from '../organizer/organizer.service'
+import { CUSTOMER_JWT_CHECKIN_SERVICE } from '@/modules/customer/auth/auth.module'
+import { JwtService } from '@nestjs/jwt'
 
 @Injectable()
 export class StaffService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly organizerService: OrganizerService
+    private readonly organizerService: OrganizerService,
+    @Inject(CUSTOMER_JWT_CHECKIN_SERVICE)
+    private readonly checkInJwtService: JwtService
   ) {}
   async assertValidEventStaff(customer: Customer, eventId: string) {
     if (!customer) {
@@ -110,32 +117,66 @@ export class StaffService {
     return events
   }
 
-  async checkIn(user: CustomerJwtUserData, eventId: string, dto: CheckinDto) {
+  async checkIn(user: CustomerJwtUserData, dto: CheckinDto) {
     const { customerId } = user
+    const { ticketCode } = dto
+
+    const payload = await this.checkInJwtService.verifyAsync(ticketCode)
+
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: payload.ticketId,
+      },
+      include: {
+        event: true,
+      },
+    })
+
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+
     const customer = await this.prisma.customer.findUnique({
       where: {
         id: customerId,
       },
     })
-    const event = await this.prisma.event.findUnique({
-      where: {
-        id: eventId,
-      },
-    })
-
-    if (!event) {
-      throw new ApiException(ERROR_EVENT_NOT_FOUND)
-    }
-
-    await this.assertValidEventStaff(customer, eventId)
+    await this.assertValidEventStaff(customer, ticket.eventId)
 
     // 验证，活动结束不可以checkIn
-    if (new Date() > event.endTime) {
+    if (new Date() > ticket.event.endTime) {
       throw new ApiException(ERROR_EVENT_ENDED)
     }
 
-    // TODO: 验证门票，修改票状态
+    const userCustomer = await this.prisma.customer.findUnique({
+      where: {
+        id: payload.customerId,
+        status: CustomerStatus.ACTIVE,
+      },
+    })
+    if (!userCustomer) {
+      throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
+    }
+    if (ticket.ownerId !== userCustomer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER)
+    }
+    if (ticket.status !== TicketStatus.SOLD) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_SOLD)
+    }
 
-    return true
+    // TODO: 在链上验证人票关系
+
+    const updatedTicket = await this.prisma.eventTicket.update({
+      where: {
+        id: ticket.id,
+      },
+      data: {
+        status: TicketStatus.USED,
+        staffId: customerId,
+        checkInAt: new Date(),
+      },
+    })
+
+    return updatedTicket
   }
 }

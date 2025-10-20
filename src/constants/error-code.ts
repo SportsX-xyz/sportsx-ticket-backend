@@ -49,6 +49,7 @@ export const ERROR_EVENT_TICKET_ORDER_NOT_NEW = 22032
 export const ERROR_EVENT_TICKET_ORDER_NOT_BUYER = 22033
 export const ERROR_EVENT_TICKET_NOT_LOCK = 22034
 export const ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN = 22035
+export const ERROR_EVENT_TICKET_NOT_SOLD = 22036
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -113,4 +114,5 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_TICKET_NOT_LOCK]: 'event.ticket.not.lock',
   [ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN]:
     'event.ticket.order.already.on.chain',
+  [ERROR_EVENT_TICKET_NOT_SOLD]: 'event.ticket.not.sold',
 }

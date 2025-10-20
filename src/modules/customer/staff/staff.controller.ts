@@ -31,18 +31,13 @@ export class StaffController {
     return this.staffService.events(req.user as unknown as CustomerJwtUserData)
   }
 
-  @Post('check-in/:eventId')
+  @Post('check-in')
   @ApiOperation({
     summary: 'Check in',
   })
-  async checkIn(
-    @Req() req: FastifyRequest,
-    @Param() param: { eventId: string },
-    @Body() dto: CheckinDto
-  ) {
+  async checkIn(@Req() req: FastifyRequest, @Body() dto: CheckinDto) {
     return this.staffService.checkIn(
       req.user as unknown as CustomerJwtUserData,
-      param.eventId,
       dto
     )
   }

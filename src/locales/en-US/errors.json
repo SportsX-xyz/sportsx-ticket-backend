@@ -46,5 +46,6 @@
   "event.ticket.order.not.new": "Event ticket order not new",
   "event.ticket.order.not.buyer": "Event ticket order not buyer",
   "event.ticket.not.lock": "Event ticket not lock",
-  "event.ticket.order.already.on.chain": "Event ticket order already on chain"
+  "event.ticket.order.already.on.chain": "Event ticket order already on chain",
+  "event.ticket.not.sold": "Event ticket not sold"
 }
