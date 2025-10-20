@@ -177,6 +177,9 @@ export class StaffService {
       },
     })
 
+    // TODO: 在链上把NFT状态改为 isScanned = true
+    // 由于只有eventHolder才能修改NFT状态，所以staff必须是holder自己，这是个BUG，后面应该支持任意指定的staff验票。
+
     return updatedTicket
   }
 }
