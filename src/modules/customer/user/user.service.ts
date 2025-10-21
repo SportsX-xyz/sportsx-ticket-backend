@@ -42,6 +42,7 @@ import { ResaleDto } from './dto/resale.dto'
 import { ManageService } from '../manage/manage.service'
 import { SolanaService } from '@/modules/shared/solana/solana.service'
 import { PayDto } from './dto/pay.dto'
+import { PublicKey } from '@solana/web3.js'
 
 @Injectable()
 export class UserService {
@@ -397,11 +398,11 @@ export class UserService {
     //   throw new ApiException(ERROR_EVENT_TICKET_ONLY_ONE_PER_EVENT)
     // }
 
-    // TODO: 去链上验证票的所属权， 万一发现所属权有问题，怎样处理线下数据。
-    const partialSignedTransaction = await this.solanaService.mintPartialSign(
-      customerId,
-      ticketId
-    )
+    // 多签机制
+    // const partialSignedTransaction = await this.solanaService.mintPartialSign(
+    //   customerId,
+    //   ticketId
+    // )
 
     // TODO: 应该使用事务的方式
     // await this.prisma.eventTicket.update({
@@ -413,6 +414,32 @@ export class UserService {
     //   },
     // })
 
+    const nonce = BigInt(Date.now())
+    const validUntil = BigInt(Math.floor(Date.now() / 1000) + 60) // 60秒有效
+
+    // 3. 存储nonce和ticket关联 (10分钟TTL)
+    // await redis.setex(
+    //   `nonce:${nonce}`,
+    //   600,
+    //   JSON.stringify({
+    //     ticketId: ticket.id,
+    //     buyer: customer.walletId,
+    //   })
+    // )
+
+    const { signature, backendAuthority } =
+      this.solanaService.signPurchaseAuthorization(
+        customer.walletId,
+        ticket.ticketTypeId,
+        ticket.id, // UUID用于链上PDA生成
+        BigInt(ticket.price.toNumber()),
+        validUntil,
+        nonce,
+        undefined, // First-time purchase: no ticket_pda
+        ticket.rowNumber, // 座位行
+        ticket.columnNumber // 座位列
+      )
+
     const order: any = await this.prisma.eventTicketOrder.create({
       data: {
         ticketId: ticket.id,
@@ -422,7 +449,20 @@ export class UserService {
       },
     })
 
-    order.partialSignedTransaction = partialSignedTransaction
+    // order.partialSignedTransaction = partialSignedTransaction
+    order.sign = {
+      buyer: customer.walletId,
+      ticketTypeId: ticket.ticketTypeId,
+      ticketUuid: ticket.id, // 前端需要传给合约
+      maxPrice: ticket.price.toString(),
+      validUntil: validUntil.toString(),
+      nonce: nonce.toString(),
+      ticketPda: null,
+      rowNumber: ticket.rowNumber,
+      columnNumber: ticket.columnNumber,
+      signature,
+      backendAuthority,
+    }
 
     return order
   }
@@ -643,11 +683,51 @@ export class UserService {
     //   throw new ApiException(ERROR_EVENT_TICKET_NOT_LOCK)
     // }
 
-    const partialSignedTransaction = await this.solanaService.mintPartialSign(
-      customerId,
-      ticket.id
-    )
-    order.partialSignedTransaction = partialSignedTransaction
+    // const partialSignedTransaction = await this.solanaService.mintPartialSign(
+    //   customerId,
+    //   ticket.id
+    // )
+    // order.partialSignedTransaction = partialSignedTransaction
+
+    const nonce = BigInt(Date.now())
+    const validUntil = BigInt(Math.floor(Date.now() / 1000) + 60) // 60秒有效
+
+    // 3. 存储nonce和ticket关联 (10分钟TTL)
+    // await redis.setex(
+    //   `nonce:${nonce}`,
+    //   600,
+    //   JSON.stringify({
+    //     ticketId: ticket.id,
+    //     buyer: customer.walletId,
+    //   })
+    // )
+
+    const { signature, backendAuthority } =
+      this.solanaService.signPurchaseAuthorization(
+        customer.walletId,
+        ticket.ticketTypeId,
+        ticket.id, // UUID用于链上PDA生成
+        BigInt(ticket.price.toNumber()),
+        validUntil,
+        nonce,
+        undefined, // First-time purchase: no ticket_pda
+        ticket.rowNumber, // 座位行
+        ticket.columnNumber // 座位列
+      )
+    order.sign = {
+      buyer: customer.walletId,
+      ticketTypeId: ticket.ticketTypeId,
+      ticketUuid: ticket.id, // 前端需要传给合约
+      maxPrice: ticket.price.toString(),
+      validUntil: validUntil.toString(),
+      nonce: nonce.toString(),
+      ticketPda: null,
+      rowNumber: ticket.rowNumber,
+      columnNumber: ticket.columnNumber,
+      signature,
+      backendAuthority,
+    }
+
     return order
   }
 

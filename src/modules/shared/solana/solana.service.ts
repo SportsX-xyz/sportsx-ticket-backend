@@ -30,6 +30,8 @@ import {
   getAssociatedTokenAddress,
   mintTo,
 } from '@solana/spl-token'
+import nacl from 'tweetnacl'
+import bs58 from 'bs58'
 
 @Injectable()
 export class SolanaService {
@@ -38,11 +40,20 @@ export class SolanaService {
   private readonly program: Program<TicketingProgram>
   private readonly provider: anchor.AnchorProvider
   private readonly platformConfigPDA: PublicKey
+  private readonly backendAuthority: Keypair
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService
   ) {
+    // For sign
+    this.backendAuthority = Keypair.fromSecretKey(
+      Buffer.from(
+        this.configService.get<string>('TICKET_AUTHORITY_SECRET'),
+        'base64'
+      )
+    )
+
     this.provider = anchor.AnchorProvider.env()
     anchor.setProvider(this.provider)
 
@@ -57,6 +68,27 @@ export class SolanaService {
       this.program.programId
     )
     this.platformConfigPDA = platformConfigPDA
+  }
+
+  generateSolanaKeypair() {
+    // 生成新的 Solana 密钥对
+    const keypair = Keypair.generate()
+
+    // 获取私钥（64 字节）
+    const secretKey = keypair.secretKey
+
+    // 转换为 base64 编码
+    const base64Secret = Buffer.from(secretKey).toString('base64')
+
+    // 输出结果
+    console.log('Public Key:', keypair.publicKey.toBase58())
+    console.log('Base64 Secret Key:', base64Secret)
+    console.log('Base64 Length:', base64Secret.length)
+
+    return {
+      publicKey: keypair.publicKey.toBase58(),
+      secretKey: base64Secret,
+    }
   }
 
   async purchaseAndMint(userCustomerId: string, ticketId: string) {
@@ -449,5 +481,54 @@ export class SolanaService {
       // .signers([merchantPublicKey])
       .rpc()
     return tx
+  }
+
+  signPurchaseAuthorization(
+    buyerCustomerId: string,
+    ticketTypeId: string,
+    ticketUuid: string, // Backend-generated UUID (standard UUID format)
+    maxPrice: bigint,
+    validUntil: bigint,
+    nonce: bigint,
+    ticketPda?: string, // For resale, specify the ticket being purchased
+    rowNumber: number = 0, // Seat row (0 for general admission)
+    columnNumber: number = 0 // Seat column (0 for general admission)
+  ) {
+    const buyerPublicKey = new PublicKey(buyerCustomerId)
+    // 序列化消息（必须与合约中的顺序完全一致）
+    const parts: Buffer[] = [
+      buyerPublicKey.toBuffer(), // 32 bytes
+      Buffer.from(ticketTypeId), // variable
+      Buffer.from(ticketUuid), // variable (36 bytes for standard UUID)
+      Buffer.from(new BigUint64Array([maxPrice]).buffer), // 8 bytes LE
+      Buffer.from(new BigInt64Array([validUntil]).buffer), // 8 bytes LE
+      Buffer.from(new BigUint64Array([nonce]).buffer), // 8 bytes LE
+    ]
+
+    // Optional ticket_pda (for resale)
+    if (ticketPda) {
+      const ticketPdaPublicKey = new PublicKey(ticketPda)
+      parts.push(Buffer.from([1])) // Option::Some
+      parts.push(ticketPdaPublicKey.toBuffer()) // 32 bytes
+    } else {
+      parts.push(Buffer.from([0])) // Option::None
+    }
+
+    // Seat information
+    parts.push(Buffer.from(new Uint16Array([rowNumber]).buffer)) // 2 bytes LE
+    parts.push(Buffer.from(new Uint16Array([columnNumber]).buffer)) // 2 bytes LE
+
+    const message = Buffer.concat(parts)
+
+    // Ed25519签名
+    const signature = nacl.sign.detached(
+      message,
+      this.backendAuthority.secretKey
+    )
+
+    return {
+      signature: Array.from(signature),
+      backendAuthority: this.backendAuthority.publicKey.toString(),
+    }
   }
 }
