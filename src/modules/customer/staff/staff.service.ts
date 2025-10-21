@@ -190,7 +190,7 @@ export class StaffService {
 
   async checkInVerify(user: CustomerJwtUserData, dto: CheckinVerifyDto) {
     const { customerId } = user
-    const { ticketCode, checkInTxHash } = dto
+    const { ticketCode } = dto
 
     const payload = await this.checkInJwtService.verifyAsync(ticketCode)
 
