@@ -527,7 +527,7 @@ export class SolanaService {
     )
 
     return {
-      signature: Array.from(signature),
+      signature: bs58.encode(signature),
       backendAuthority: this.backendAuthority.publicKey.toString(),
     }
   }
