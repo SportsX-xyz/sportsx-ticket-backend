@@ -18,6 +18,7 @@ import * as anchor from '@coral-xyz/anchor'
 import { PrismaService } from '../prisma/prisma.service'
 import { ApiException } from '../../../exceptions/api.exception'
 import {
+  ERROR_CUSTOMER_NOT_FOUND,
   ERROR_EVENT_NOT_FOUND,
   ERROR_EVENT_TICKET_NOT_FOUND,
 } from '../../../constants/error-code'
@@ -399,5 +400,54 @@ export class SolanaService {
     )
     console.log('isSigner', isSigner)
     // return tx
+  }
+
+  async scanTicket(ticketId: string, merchantId: string) {
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: ticketId,
+      },
+      include: {
+        event: true,
+      },
+    })
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+    const merchant = await this.prisma.customer.findUnique({
+      where: {
+        id: merchantId,
+      },
+    })
+    if (!merchant) {
+      throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
+    }
+    const merchantPublicKey = new PublicKey(merchant.walletId)
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+      this.program.programId
+    )
+    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('TICKET'),
+        Buffer.from(ticketId.replace(/-/g, '')),
+        eventPDA.toBuffer(),
+      ],
+      this.program.programId
+    )
+    const tx = await this.program.methods
+      .scanTicket(
+        ticket.id.replace(/-/g, ''),
+        ticket.event.id.replace(/-/g, '')
+      )
+      .accounts({
+        merchant: merchantPublicKey,
+        // @ts-ignore
+        seatAccount: seatAccountPDA,
+        event: eventPDA,
+      })
+      // .signers([merchantPublicKey])
+      .rpc()
+    return tx
   }
 }

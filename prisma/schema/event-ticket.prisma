@@ -25,6 +25,7 @@ model EventTicket {
   staffId       String?
   staff         Customer?          @relation(fields: [staffId], references: [id], name: "TicketCheckInStaff")
   checkInAt     DateTime?          @db.Timestamptz
+  checkInTxHash String?            @db.VarChar(255)
 }
 
 enum TicketStatus {

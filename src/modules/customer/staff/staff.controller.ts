@@ -6,7 +6,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { StaffService } from './staff.service'
 import { FastifyRequest } from 'fastify'
 import { CustomerJwtUserData } from '../../../types'
-import { CheckinDto } from './dto/checkin.dto'
+import { CheckinDto, CheckinVerifyDto } from './dto/checkin.dto'
 
 @UseGuards(CustomerAuthGuard)
 @Controller('staff')
@@ -37,6 +37,20 @@ export class StaffController {
   })
   async checkIn(@Req() req: FastifyRequest, @Body() dto: CheckinDto) {
     return this.staffService.checkIn(
+      req.user as unknown as CustomerJwtUserData,
+      dto
+    )
+  }
+
+  @Post('check-in-verify')
+  @ApiOperation({
+    summary: 'Check in verify',
+  })
+  async checkInVerify(
+    @Req() req: FastifyRequest,
+    @Body() dto: CheckinVerifyDto
+  ) {
+    return this.staffService.checkInVerify(
       req.user as unknown as CustomerJwtUserData,
       dto
     )

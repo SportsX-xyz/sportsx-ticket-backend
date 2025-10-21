@@ -13,7 +13,7 @@ import { Injectable, Inject } from '@nestjs/common'
 import { Customer, CustomerStatus, TicketStatus } from '@prisma/client'
 import { CustomerJwtUserData } from '../../../types'
 import { PrismaService } from '../../shared/prisma/prisma.service'
-import { CheckinDto } from './dto/checkin.dto'
+import { CheckinDto, CheckinVerifyDto } from './dto/checkin.dto'
 import { OrganizerService } from '../organizer/organizer.service'
 import { CUSTOMER_JWT_CHECKIN_SERVICE } from '@/modules/customer/auth/auth.module'
 import { JwtService } from '@nestjs/jwt'
@@ -119,7 +119,7 @@ export class StaffService {
 
   async checkIn(user: CustomerJwtUserData, dto: CheckinDto) {
     const { customerId } = user
-    const { ticketCode } = dto
+    const { ticketCode, checkInTxHash } = dto
 
     const payload = await this.checkInJwtService.verifyAsync(ticketCode)
 
@@ -166,6 +166,10 @@ export class StaffService {
 
     // TODO: 在链上验证人票关系
 
+    // TODO: 在链上把NFT状态改为 isScanned = true
+    // 这里暂时因为不知道怎样从后端发起合约调用，改为前端调用，把txHash传过来
+    // 暂时不验证txHash是否有效
+
     const updatedTicket = await this.prisma.eventTicket.update({
       where: {
         id: ticket.id,
@@ -174,12 +178,63 @@ export class StaffService {
         status: TicketStatus.USED,
         staffId: customerId,
         checkInAt: new Date(),
+        checkInTxHash,
+      },
+      include: {
+        event: true,
       },
     })
 
-    // TODO: 在链上把NFT状态改为 isScanned = true
-    // 由于只有eventHolder才能修改NFT状态，所以staff必须是holder自己，这是个BUG，后面应该支持任意指定的staff验票。
-
     return updatedTicket
+  }
+
+  async checkInVerify(user: CustomerJwtUserData, dto: CheckinVerifyDto) {
+    const { customerId } = user
+    const { ticketCode, checkInTxHash } = dto
+
+    const payload = await this.checkInJwtService.verifyAsync(ticketCode)
+
+    const ticket = await this.prisma.eventTicket.findUnique({
+      where: {
+        id: payload.ticketId,
+      },
+      include: {
+        event: true,
+      },
+    })
+
+    if (!ticket) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+    }
+
+    const customer = await this.prisma.customer.findUnique({
+      where: {
+        id: customerId,
+      },
+    })
+    await this.assertValidEventStaff(customer, ticket.eventId)
+
+    // 验证，活动结束不可以checkIn
+    if (new Date() > ticket.event.endTime) {
+      throw new ApiException(ERROR_EVENT_ENDED)
+    }
+
+    const userCustomer = await this.prisma.customer.findUnique({
+      where: {
+        id: payload.customerId,
+        status: CustomerStatus.ACTIVE,
+      },
+    })
+    if (!userCustomer) {
+      throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
+    }
+    if (ticket.ownerId !== userCustomer.id) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_OWNED_BY_CUSTOMER)
+    }
+    if (ticket.status !== TicketStatus.SOLD) {
+      throw new ApiException(ERROR_EVENT_TICKET_NOT_SOLD)
+    }
+
+    return ticket
   }
 }
