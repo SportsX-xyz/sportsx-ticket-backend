@@ -15,15 +15,14 @@ async function bootstrap() {
   const adapter = new FastifyAdapter()
   adapter.enableCors({
     origin: [
-      // localhost 所有端口
-      /^https?:\/\/localhost(:\d+)?$/,
-      /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
-      // *.tortorcoin 所有子域名
-      /^https?:\/\/[^.]*\.tortorcoin\.com$/,
-      /^https?:\/\/tortorcoin\.com$/,
-      // *.sportsx.fun 所有子域名
-      /^https?:\/\/[^.]*\.sportsx\.fun$/,
-      /^https?:\/\/sportsx\.fun$/,
+    'https://ticket.tortorcoin.top',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://pof.tortorcoin.top',
+    'https://ticket.sportsx.fun',
+    'https://pof.sportsx.fun',
+    'https://sportsx.fun',
+    'https://www.sportsx.fun'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: [
