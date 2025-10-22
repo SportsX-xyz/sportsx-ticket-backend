@@ -64,10 +64,21 @@ export class SolanaService {
 
     // Derive platform config PDA
     const [platformConfigPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('PLATFORM_CONFIG')],
+      [Buffer.from('platform_config')],
       this.program.programId
     )
     this.platformConfigPDA = platformConfigPDA
+  }
+
+  generateSolanaBase64KeyPairByJSONPrivateKey(jsonPrivateKey: string) {
+    // 1. 将数字数组转换为 Buffer（字节序列）
+    // Buffer.from() 可直接接收 Uint8Array 或数字数组作为参数
+    const privateKeyBuffer = Buffer.from(jsonPrivateKey)
+
+    // 2. 将 Buffer 转换为 Base64 编码字符串
+    const privateKeyBase64 = privateKeyBuffer.toString('base64')
+
+    return privateKeyBase64
   }
 
   generateSolanaKeypair() {
@@ -91,244 +102,244 @@ export class SolanaService {
     }
   }
 
-  async purchaseAndMint(userCustomerId: string, ticketId: string) {
-    const userCustomer = await this.prisma.customer.findUnique({
-      where: {
-        id: userCustomerId,
-      },
-    })
+  // async purchaseAndMint(userCustomerId: string, ticketId: string) {
+  //   const userCustomer = await this.prisma.customer.findUnique({
+  //     where: {
+  //       id: userCustomerId,
+  //     },
+  //   })
 
-    const ticket = await this.prisma.eventTicket.findUnique({
-      where: {
-        id: ticketId,
-      },
-      include: {
-        event: true,
-      },
-    })
-    if (!ticket) {
-      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
-    }
+  //   const ticket = await this.prisma.eventTicket.findUnique({
+  //     where: {
+  //       id: ticketId,
+  //     },
+  //     include: {
+  //       event: true,
+  //     },
+  //   })
+  //   if (!ticket) {
+  //     throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+  //   }
 
-    // const userPublicKey = new PublicKey(userCustomer.walletId)
-    const fakeUser = Keypair.generate()
-    // await this.connection.requestAirdrop(fakeUser.publicKey, LAMPORTS_PER_SOL)
-    let ticketMintKeypair = Keypair.generate()
-    let ticketMint = ticketMintKeypair.publicKey
+  //   // const userPublicKey = new PublicKey(userCustomer.walletId)
+  //   const fakeUser = Keypair.generate()
+  //   // await this.connection.requestAirdrop(fakeUser.publicKey, LAMPORTS_PER_SOL)
+  //   let ticketMintKeypair = Keypair.generate()
+  //   let ticketMint = ticketMintKeypair.publicKey
 
-    const usdtMint = await createMint(
-      this.connection,
-      this.provider.wallet.payer,
-      this.provider.wallet.publicKey, // mint authority
-      null,
-      6 // USDT decimals
-    )
+  //   const usdtMint = await createMint(
+  //     this.connection,
+  //     this.provider.wallet.payer,
+  //     this.provider.wallet.publicKey, // mint authority
+  //     null,
+  //     6 // USDT decimals
+  //   )
 
-    const [userUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), fakeUser.publicKey.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
+  //   const [userUSDTATA] = PublicKey.findProgramAddressSync(
+  //     [usdtMint.toBuffer(), fakeUser.publicKey.toBuffer()],
+  //     TOKEN_PROGRAM_ID
+  //   )
 
-    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
+  //   const [platformUSDTATA] = PublicKey.findProgramAddressSync(
+  //     [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
+  //     TOKEN_PROGRAM_ID
+  //   )
 
-    const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
-      this.program.programId
-    )
+  //   const [eventPDA] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+  //     this.program.programId
+  //   )
 
-    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('TICKET'),
-        Buffer.from(ticketId.replace(/-/g, '')),
-        eventPDA.toBuffer(),
-      ],
-      this.program.programId
-    )
+  //   const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('TICKET'),
+  //       Buffer.from(ticketId.replace(/-/g, '')),
+  //       eventPDA.toBuffer(),
+  //     ],
+  //     this.program.programId
+  //   )
 
-    // 获取 recentBlockhash（重要：前端必须在有效期内使用）
-    const { blockhash, lastValidBlockHeight } =
-      await this.connection.getLatestBlockhash('confirmed')
+  //   // 获取 recentBlockhash（重要：前端必须在有效期内使用）
+  //   const { blockhash, lastValidBlockHeight } =
+  //     await this.connection.getLatestBlockhash('confirmed')
 
-    // 创建交易
-    const tx = new Transaction()
-    tx.recentBlockhash = blockhash
-    tx.feePayer = fakeUser.publicKey
+  //   // 创建交易
+  //   const tx = new Transaction()
+  //   tx.recentBlockhash = blockhash
+  //   tx.feePayer = fakeUser.publicKey
 
-    const purchaseAndMintInstruction = await this.program.methods
-      .purchaseAndMint(
-        new anchor.BN(10 * 1e6), // $10 USDT
-        ticket.id.replace(/-/g, ''),
-        ticket.event.id.replace(/-/g, ''),
-        `${ticket.rowNumber}-${ticket.columnNumber}`
-      )
-      .accounts({
-        user: fakeUser.publicKey,
-        platformAuthority: this.platformAuthority,
-        usdtMint,
-        userUsdtAta: userUSDTATA,
-        platformUsdtVault: platformUSDTATA,
-        merchantUsdtVault: Keypair.generate().publicKey, // mock
-        ticketMint,
-        // @ts-ignore
-        userNftAta: Keypair.generate().publicKey,
-        mintAuthority: Keypair.generate().publicKey,
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
-        platformConfig: this.platformConfigPDA,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-      })
-      .instruction()
+  //   const purchaseAndMintInstruction = await this.program.methods
+  //     .purchaseAndMint(
+  //       new anchor.BN(10 * 1e6), // $10 USDT
+  //       ticket.id.replace(/-/g, ''),
+  //       ticket.event.id.replace(/-/g, ''),
+  //       `${ticket.rowNumber}-${ticket.columnNumber}`
+  //     )
+  //     .accounts({
+  //       user: fakeUser.publicKey,
+  //       platformAuthority: this.platformAuthority,
+  //       usdtMint,
+  //       userUsdtAta: userUSDTATA,
+  //       platformUsdtVault: platformUSDTATA,
+  //       merchantUsdtVault: Keypair.generate().publicKey, // mock
+  //       ticketMint,
+  //       // @ts-ignore
+  //       userNftAta: Keypair.generate().publicKey,
+  //       mintAuthority: Keypair.generate().publicKey,
+  //       seatAccount: seatAccountPDA,
+  //       event: eventPDA,
+  //       platformConfig: this.platformConfigPDA,
+  //       systemProgram: SystemProgram.programId,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+  //       rent: SYSVAR_RENT_PUBKEY,
+  //     })
+  //     .instruction()
 
-    tx.add(purchaseAndMintInstruction)
+  //   tx.add(purchaseAndMintInstruction)
 
-    // tx.partialSign(fakeUser, this.provider.wallet.payer, ticketMintKeypair)
+  //   // tx.partialSign(fakeUser, this.provider.wallet.payer, ticketMintKeypair)
 
-    tx.partialSign(fakeUser)
-    tx.partialSign(this.provider.wallet.payer)
-    tx.partialSign(ticketMintKeypair)
+  //   tx.partialSign(fakeUser)
+  //   tx.partialSign(this.provider.wallet.payer)
+  //   tx.partialSign(ticketMintKeypair)
 
-    const signature = await this.connection.sendRawTransaction(tx.serialize())
-    const strategy = {
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-      commitment: 'confirmed',
-    } as TransactionConfirmationStrategy
+  //   const signature = await this.connection.sendRawTransaction(tx.serialize())
+  //   const strategy = {
+  //     signature,
+  //     blockhash,
+  //     lastValidBlockHeight,
+  //     commitment: 'confirmed',
+  //   } as TransactionConfirmationStrategy
 
-    const response = await this.connection.confirmTransaction(strategy)
+  //   const response = await this.connection.confirmTransaction(strategy)
 
-    // const response = await this.provider.sendAndConfirm(tx, [
-    //   fakeUser,
-    //   this.provider.wallet.payer,
-    //   ticketMintKeypair,
-    // ])
-    return response
-  }
+  //   // const response = await this.provider.sendAndConfirm(tx, [
+  //   //   fakeUser,
+  //   //   this.provider.wallet.payer,
+  //   //   ticketMintKeypair,
+  //   // ])
+  //   return response
+  // }
 
-  async mintPartialSign(userCustomerId: string, ticketId: string) {
-    const userCustomer = await this.prisma.customer.findUnique({
-      where: {
-        id: userCustomerId,
-      },
-    })
+  // async mintPartialSign(userCustomerId: string, ticketId: string) {
+  //   const userCustomer = await this.prisma.customer.findUnique({
+  //     where: {
+  //       id: userCustomerId,
+  //     },
+  //   })
 
-    const ticket = await this.prisma.eventTicket.findUnique({
-      where: {
-        id: ticketId,
-      },
-      include: {
-        event: true,
-      },
-    })
-    if (!ticket) {
-      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
-    }
+  //   const ticket = await this.prisma.eventTicket.findUnique({
+  //     where: {
+  //       id: ticketId,
+  //     },
+  //     include: {
+  //       event: true,
+  //     },
+  //   })
+  //   if (!ticket) {
+  //     throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
+  //   }
 
-    const userPublicKey = new PublicKey(userCustomer.walletId)
-    let ticketMintKeypair = Keypair.generate()
-    let ticketMint = ticketMintKeypair.publicKey
+  //   const userPublicKey = new PublicKey(userCustomer.walletId)
+  //   let ticketMintKeypair = Keypair.generate()
+  //   let ticketMint = ticketMintKeypair.publicKey
 
-    const usdtMint = await createMint(
-      this.connection,
-      this.provider.wallet.payer,
-      this.provider.wallet.publicKey, // mint authority
-      null,
-      6 // USDT decimals
-    )
+  //   const usdtMint = await createMint(
+  //     this.connection,
+  //     this.provider.wallet.payer,
+  //     this.provider.wallet.publicKey, // mint authority
+  //     null,
+  //     6 // USDT decimals
+  //   )
 
-    const [userUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), userPublicKey.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
+  //   const [userUSDTATA] = PublicKey.findProgramAddressSync(
+  //     [usdtMint.toBuffer(), userPublicKey.toBuffer()],
+  //     TOKEN_PROGRAM_ID
+  //   )
 
-    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
+  //   const [platformUSDTATA] = PublicKey.findProgramAddressSync(
+  //     [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
+  //     TOKEN_PROGRAM_ID
+  //   )
 
-    const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
-      this.program.programId
-    )
+  //   const [eventPDA] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+  //     this.program.programId
+  //   )
 
-    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('TICKET'),
-        Buffer.from(ticketId.replace(/-/g, '')),
-        eventPDA.toBuffer(),
-      ],
-      this.program.programId
-    )
+  //   const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('TICKET'),
+  //       Buffer.from(ticketId.replace(/-/g, '')),
+  //       eventPDA.toBuffer(),
+  //     ],
+  //     this.program.programId
+  //   )
 
-    // 获取 recentBlockhash（重要：前端必须在有效期内使用）
-    const { blockhash, lastValidBlockHeight } =
-      await this.connection.getLatestBlockhash('confirmed')
+  //   // 获取 recentBlockhash（重要：前端必须在有效期内使用）
+  //   const { blockhash, lastValidBlockHeight } =
+  //     await this.connection.getLatestBlockhash('confirmed')
 
-    // 创建交易
-    const tx = new Transaction()
-    tx.recentBlockhash = blockhash
-    tx.feePayer = userPublicKey
+  //   // 创建交易
+  //   const tx = new Transaction()
+  //   tx.recentBlockhash = blockhash
+  //   tx.feePayer = userPublicKey
 
-    const purchaseAndMintInstruction = await this.program.methods
-      .purchaseAndMint(
-        new anchor.BN(10 * 1e6), // $10 USDT
-        ticket.id.replace(/-/g, ''),
-        ticket.event.id.replace(/-/g, ''),
-        `${ticket.rowNumber}-${ticket.columnNumber}`
-      )
-      .accounts({
-        user: userPublicKey,
-        platformAuthority: this.platformAuthority,
-        usdtMint,
-        userUsdtAta: userUSDTATA,
-        platformUsdtVault: platformUSDTATA,
-        merchantUsdtVault: Keypair.generate().publicKey, // mock
-        ticketMint,
-        // @ts-ignore
-        userNftAta: Keypair.generate().publicKey,
-        mintAuthority: Keypair.generate().publicKey,
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
-        platformConfig: this.platformConfigPDA,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-      })
-      .instruction()
+  //   const purchaseAndMintInstruction = await this.program.methods
+  //     .purchaseAndMint(
+  //       new anchor.BN(10 * 1e6), // $10 USDT
+  //       ticket.id.replace(/-/g, ''),
+  //       ticket.event.id.replace(/-/g, ''),
+  //       `${ticket.rowNumber}-${ticket.columnNumber}`
+  //     )
+  //     .accounts({
+  //       user: userPublicKey,
+  //       platformAuthority: this.platformAuthority,
+  //       usdtMint,
+  //       userUsdtAta: userUSDTATA,
+  //       platformUsdtVault: platformUSDTATA,
+  //       merchantUsdtVault: Keypair.generate().publicKey, // mock
+  //       ticketMint,
+  //       // @ts-ignore
+  //       userNftAta: Keypair.generate().publicKey,
+  //       mintAuthority: Keypair.generate().publicKey,
+  //       seatAccount: seatAccountPDA,
+  //       event: eventPDA,
+  //       platformConfig: this.platformConfigPDA,
+  //       systemProgram: SystemProgram.programId,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+  //       rent: SYSVAR_RENT_PUBKEY,
+  //     })
+  //     .instruction()
 
-    tx.add(purchaseAndMintInstruction)
+  //   tx.add(purchaseAndMintInstruction)
 
-    tx.partialSign(this.provider.wallet.payer)
-    tx.partialSign(ticketMintKeypair)
+  //   tx.partialSign(this.provider.wallet.payer)
+  //   tx.partialSign(ticketMintKeypair)
 
-    // 序列化交易消息（不包含签名），供前端部分签名
-    const serializedTx = tx
-      .serialize({
-        requireAllSignatures: false,
-        verifySignatures: false,
-      })
-      .toString('base64')
-    // const serializedBlockhash = blockhash
-    // const lastValidBlockHeightNum = lastValidBlockHeight
+  //   // 序列化交易消息（不包含签名），供前端部分签名
+  //   const serializedTx = tx
+  //     .serialize({
+  //       requireAllSignatures: false,
+  //       verifySignatures: false,
+  //     })
+  //     .toString('base64')
+  //   // const serializedBlockhash = blockhash
+  //   // const lastValidBlockHeightNum = lastValidBlockHeight
 
-    // 返回给前端的数据
-    // const response = {
-    //   serializedTransaction: serializedTx,
-    //   blockhash: serializedBlockhash,
-    //   lastValidBlockHeight: lastValidBlockHeightNum,
-    //   usdtMint: usdtMint.toString(),
-    //   ticketMint: ticketMint.toString(),
-    // }
+  //   // 返回给前端的数据
+  //   // const response = {
+  //   //   serializedTransaction: serializedTx,
+  //   //   blockhash: serializedBlockhash,
+  //   //   lastValidBlockHeight: lastValidBlockHeightNum,
+  //   //   usdtMint: usdtMint.toString(),
+  //   //   ticketMint: ticketMint.toString(),
+  //   // }
 
-    return serializedTx
-  }
+  //   return serializedTx
+  // }
 
   async createEvent(eventId: string) {
     const event = await this.prisma.event.findUnique({
@@ -343,25 +354,27 @@ export class SolanaService {
     })
     const merchantPublicKey = new PublicKey(customer.walletId)
     const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(eventId.replace(/-/g, ''))],
+      [Buffer.from('event'), Buffer.from(eventId.replace(/-/g, ''))],
       this.program.programId
     )
 
+    const now = Math.floor(Date.now() / 1000)
     const tx = await this.program.methods
       .createEvent(
         eventId.replace(/-/g, ''),
         event.ipfsUri,
-        merchantPublicKey,
-        event.name,
-        event.symbol,
-        new BN(event.endTime.getTime() / 1000) // tomorrow
+        new BN(event.startTime.getTime() / 1000),
+        new BN(event.endTime.getTime() / 1000),
+        new BN(now),
+        new BN(event.stopSaleBefore * 60),
+        event.resaleFeeRate,
+        event.maxResaleTimes
       )
       .accounts({
-        payer: this.provider.wallet.publicKey,
         // @ts-ignore
-        event: eventPDA,
         platformConfig: this.platformConfigPDA,
-        platformAuthority: this.platformAuthority,
+        event: eventPDA,
+        organizer: this.platformAuthority,
         systemProgram: SystemProgram.programId,
       })
       .rpc()
@@ -467,20 +480,18 @@ export class SolanaService {
       ],
       this.program.programId
     )
-    const tx = await this.program.methods
-      .scanTicket(
-        ticket.id.replace(/-/g, ''),
-        ticket.event.id.replace(/-/g, '')
-      )
-      .accounts({
-        merchant: merchantPublicKey,
-        // @ts-ignore
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
-      })
-      // .signers([merchantPublicKey])
-      .rpc()
-    return tx
+    // const tx = await this.program.methods
+    //   .checkInTicket(ticket.event.id.replace(/-/g, ''))
+    //   .accounts({
+    //     event: eventPDA,
+    //     checkinAuthority: merchantPublicKey,
+    //     ticket: seatAccountPDA,
+    //     operator: merchantPublicKey,
+    //   })
+    //   // .signers([merchantPublicKey])
+    //   .rpc()
+    // return tx
+    return 'need review'
   }
 
   signPurchaseAuthorization(
