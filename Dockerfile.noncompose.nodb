@@ -30,21 +30,5 @@ COPY --from=build /app/Anchor.toml ./Anchor.toml
 COPY --from=build /app/target ./target
 EXPOSE 4000
 
-# 创建新的entrypoint脚本，跳过PostgreSQL等待
-RUN echo '#!/usr/bin/env sh\n\
-set -e\n\
-\n\
-echo "Using remote database, skipping postgres wait"\n\
-\n\
-pnpm prisma:generate\n\
-# use prisma migrate deploy database\n\
-npx prisma migrate deploy\n\
-\n\
-if [ "${USE_PM2:-false}" = "true" ]; then\n\
-  pm2 startOrReload deploy/pm2/dev.json\n\
-  exec pm2 logs --raw\n\
-else\n\
-  exec node dist/src/main.js\n\
-fi' > /entrypoint-remote.sh && chmod +x /entrypoint-remote.sh
-
-CMD ["/entrypoint-remote.sh"]
+# 直接运行应用，不等待数据库
+CMD ["node", "dist/main.js"]
