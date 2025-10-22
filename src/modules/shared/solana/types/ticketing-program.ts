@@ -218,22 +218,41 @@ export type TicketingProgram = {
         {
           name: 'associatedTokenProgram'
           address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ]
       args: [
         {
-          name: 'authorizationData'
-          type: {
-            defined: {
-              name: 'authorizationData'
-            }
-          }
-        },
-        {
-          name: 'backendSignature'
-          type: {
-            array: ['u8', 64]
-          }
+          name: 'resalePrice'
+          type: 'u64'
         }
       ]
     },
@@ -304,6 +323,35 @@ export type TicketingProgram = {
         {
           name: 'operator'
           signer: true
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ]
       args: [
@@ -466,6 +514,35 @@ export type TicketingProgram = {
           }
         },
         {
+          name: 'ticketAuthority'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
           name: 'deployer'
           writable: true
           signer: true
@@ -493,6 +570,79 @@ export type TicketingProgram = {
           type: 'pubkey'
         }
       ]
+    },
+    {
+      name: 'initializeTicketAuthority'
+      docs: ['Initialize ticket authority for existing deployments']
+      discriminator: [224, 3, 191, 157, 126, 88, 132, 246]
+      accounts: [
+        {
+          name: 'platformConfig'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'ticketAuthority'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'authority'
+          writable: true
+          signer: true
+        },
+        {
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        }
+      ]
+      args: []
     },
     {
       name: 'listTicket'
@@ -583,6 +733,13 @@ export type TicketingProgram = {
               }
             ]
           }
+        },
+        {
+          name: 'backendAuthority'
+          docs: [
+            'Backend authority must co-sign and match platform_config.backend_authority'
+          ]
+          signer: true
         },
         {
           name: 'event'
@@ -676,6 +833,35 @@ export type TicketingProgram = {
         {
           name: 'systemProgram'
           address: '11111111111111111111111111111111'
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ]
       args: [
@@ -692,18 +878,16 @@ export type TicketingProgram = {
           type: 'string'
         },
         {
-          name: 'authorizationData'
-          type: {
-            defined: {
-              name: 'authorizationData'
-            }
-          }
+          name: 'ticketPrice'
+          type: 'u64'
         },
         {
-          name: 'backendSignature'
-          type: {
-            array: ['u8', 64]
-          }
+          name: 'rowNumber'
+          type: 'u16'
+        },
+        {
+          name: 'columnNumber'
+          type: 'u16'
         }
       ]
     },
@@ -1002,6 +1186,10 @@ export type TicketingProgram = {
     {
       name: 'ticketAccount'
       discriminator: [231, 93, 13, 18, 239, 66, 21, 45]
+    },
+    {
+      name: 'ticketAuthority'
+      discriminator: [165, 9, 207, 147, 201, 225, 2, 103]
     }
   ]
   errors: [
@@ -1112,53 +1300,6 @@ export type TicketingProgram = {
     }
   ]
   types: [
-    {
-      name: 'authorizationData'
-      docs: ['Authorization data for purchasing tickets']
-      type: {
-        kind: 'struct'
-        fields: [
-          {
-            name: 'buyer'
-            type: 'pubkey'
-          },
-          {
-            name: 'ticketTypeId'
-            type: 'string'
-          },
-          {
-            name: 'ticketUuid'
-            type: 'string'
-          },
-          {
-            name: 'maxPrice'
-            type: 'u64'
-          },
-          {
-            name: 'validUntil'
-            type: 'i64'
-          },
-          {
-            name: 'nonce'
-            type: 'u64'
-          },
-          {
-            name: 'ticketPda'
-            type: {
-              option: 'pubkey'
-            }
-          },
-          {
-            name: 'rowNumber'
-            type: 'u16'
-          },
-          {
-            name: 'columnNumber'
-            type: 'u16'
-          }
-        ]
-      }
-    },
     {
       name: 'checkInAuthority'
       type: {
@@ -1428,6 +1569,19 @@ export type TicketingProgram = {
           {
             name: 'bump'
             docs: ['PDA bump']
+            type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'ticketAuthority'
+      docs: ['Global ticket authority PDA for signing PoF CPI calls']
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'bump'
             type: 'u8'
           }
         ]

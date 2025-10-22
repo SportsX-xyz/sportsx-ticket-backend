@@ -176,22 +176,27 @@
         {
           "name": "associated_token_program",
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "ticket_authority",
+          "docs": ["Ticket authority PDA for signing PoF CPI calls"],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 105, 99, 107, 101, 116, 95, 97, 117, 116, 104, 111, 114,
+                  105, 116, 121
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": [
         {
-          "name": "authorization_data",
-          "type": {
-            "defined": {
-              "name": "AuthorizationData"
-            }
-          }
-        },
-        {
-          "name": "backend_signature",
-          "type": {
-            "array": ["u8", 64]
-          }
+          "name": "resale_price",
+          "type": "u64"
         }
       ]
     },
@@ -264,6 +269,21 @@
         {
           "name": "operator",
           "signer": true
+        },
+        {
+          "name": "ticket_authority",
+          "docs": ["Ticket authority PDA for signing PoF CPI calls"],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 105, 99, 107, 101, 116, 95, 97, 117, 116, 104, 111, 114,
+                  105, 116, 121
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -388,6 +408,21 @@
           }
         },
         {
+          "name": "ticket_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 105, 99, 107, 101, 116, 95, 97, 117, 116, 104, 111, 114,
+                  105, 116, 121
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "deployer",
           "writable": true,
           "signer": true
@@ -415,6 +450,52 @@
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "initialize_ticket_authority",
+      "docs": ["Initialize ticket authority for existing deployments"],
+      "discriminator": [224, 3, 191, 157, 126, 88, 132, 246],
+      "accounts": [
+        {
+          "name": "platform_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 108, 97, 116, 102, 111, 114, 109, 95, 99, 111, 110, 102,
+                  105, 103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "ticket_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 105, 99, 107, 101, 116, 95, 97, 117, 116, 104, 111, 114,
+                  105, 116, 121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "list_ticket",
@@ -492,6 +573,13 @@
               }
             ]
           }
+        },
+        {
+          "name": "backend_authority",
+          "docs": [
+            "Backend authority must co-sign and match platform_config.backend_authority"
+          ],
+          "signer": true
         },
         {
           "name": "event",
@@ -573,6 +661,21 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "ticket_authority",
+          "docs": ["Ticket authority PDA for signing PoF CPI calls"],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116, 105, 99, 107, 101, 116, 95, 97, 117, 116, 104, 111, 114,
+                  105, 116, 121
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -589,18 +692,16 @@
           "type": "string"
         },
         {
-          "name": "authorization_data",
-          "type": {
-            "defined": {
-              "name": "AuthorizationData"
-            }
-          }
+          "name": "ticket_price",
+          "type": "u64"
         },
         {
-          "name": "backend_signature",
-          "type": {
-            "array": ["u8", 64]
-          }
+          "name": "row_number",
+          "type": "u16"
+        },
+        {
+          "name": "column_number",
+          "type": "u16"
         }
       ]
     },
@@ -849,6 +950,10 @@
     {
       "name": "TicketAccount",
       "discriminator": [231, 93, 13, 18, 239, 66, 21, 45]
+    },
+    {
+      "name": "TicketAuthority",
+      "discriminator": [165, 9, 207, 147, 201, 225, 2, 103]
     }
   ],
   "errors": [
@@ -959,53 +1064,6 @@
     }
   ],
   "types": [
-    {
-      "name": "AuthorizationData",
-      "docs": ["Authorization data for purchasing tickets"],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "buyer",
-            "type": "pubkey"
-          },
-          {
-            "name": "ticket_type_id",
-            "type": "string"
-          },
-          {
-            "name": "ticket_uuid",
-            "type": "string"
-          },
-          {
-            "name": "max_price",
-            "type": "u64"
-          },
-          {
-            "name": "valid_until",
-            "type": "i64"
-          },
-          {
-            "name": "nonce",
-            "type": "u64"
-          },
-          {
-            "name": "ticket_pda",
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "row_number",
-            "type": "u16"
-          },
-          {
-            "name": "column_number",
-            "type": "u16"
-          }
-        ]
-      }
-    },
     {
       "name": "CheckInAuthority",
       "type": {
@@ -1277,6 +1335,19 @@
           {
             "name": "bump",
             "docs": ["PDA bump"],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TicketAuthority",
+      "docs": ["Global ticket authority PDA for signing PoF CPI calls"],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
             "type": "u8"
           }
         ]
