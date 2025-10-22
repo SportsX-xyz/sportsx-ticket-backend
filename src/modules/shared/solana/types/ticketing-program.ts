@@ -1,31 +1,57 @@
-// IDL JSON（保持原始格式）
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/ticketing_program.json`.
+ */
 export type TicketingProgram = {
-  address: 'tDdGYG37gZufntQqs7ZPuiSRyrceNP5ZdygqVQLjUGw'
+  address: 'EFuMNTn1zfn6Zhvdq1Vjaxs83sz2gTWvDgjuJcKDYjhw'
   metadata: {
     name: 'ticketingProgram'
     version: '0.1.0'
     spec: '0.1.0'
-    description: 'Created with Anchor'
+    description: 'SportsX Ticketing Program'
   }
   instructions: [
     {
-      name: 'createEvent'
-      docs: ['Create an event and initialize NFT mint']
-      discriminator: [49, 219, 29, 203, 22, 98, 100, 87]
+      name: 'addCheckinOperator'
+      docs: ['Add a check-in operator for an event']
+      discriminator: [56, 221, 240, 236, 112, 146, 217, 89]
       accounts: [
         {
-          name: 'payer'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'event'
-          writable: true
+          name: 'platformConfig'
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [69, 86, 69, 78, 84]
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'event'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [101, 118, 101, 110, 116]
               },
               {
                 kind: 'arg'
@@ -35,103 +61,21 @@ export type TicketingProgram = {
           }
         },
         {
-          name: 'platformConfig'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [
-                  80,
-                  76,
-                  65,
-                  84,
-                  70,
-                  79,
-                  82,
-                  77,
-                  95,
-                  67,
-                  79,
-                  78,
-                  70,
-                  73,
-                  71
-                ]
-              }
-            ]
-          }
-        },
-        {
-          name: 'platformAuthority'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'systemProgram'
-          address: '11111111111111111111111111111111'
-        }
-      ]
-      args: [
-        {
-          name: 'eventId'
-          type: 'string'
-        },
-        {
-          name: 'uri'
-          type: 'string'
-        },
-        {
-          name: 'merchantKey'
-          type: 'pubkey'
-        },
-        {
-          name: 'name'
-          type: 'string'
-        },
-        {
-          name: 'symbol'
-          type: 'string'
-        },
-        {
-          name: 'expiryTimestamp'
-          type: 'i64'
-        }
-      ]
-    },
-    {
-      name: 'initializePlatformConfig'
-      docs: ['Initialize platform configuration']
-      discriminator: [23, 52, 237, 53, 176, 235, 3, 187]
-      accounts: [
-        {
-          name: 'payer'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'platformConfig'
+          name: 'checkinAuthority'
           writable: true
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [
-                  80,
-                  76,
-                  65,
-                  84,
-                  70,
-                  79,
-                  82,
-                  77,
-                  95,
-                  67,
-                  79,
-                  78,
-                  70,
-                  73,
-                  71
-                ]
+                value: [99, 104, 101, 99, 107, 105, 110, 95, 97, 117, 116, 104]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              },
+              {
+                kind: 'arg'
+                path: 'operator'
               }
             ]
           }
@@ -148,167 +92,43 @@ export type TicketingProgram = {
       ]
       args: [
         {
-          name: 'platformAuthority'
-          type: 'pubkey'
+          name: 'eventId'
+          type: 'string'
         },
         {
-          name: 'usdtMint'
+          name: 'operator'
           type: 'pubkey'
         }
       ]
     },
     {
-      name: 'purchaseAndMint'
-      docs: ['Purchase and mint a ticket NFT']
-      discriminator: [230, 6, 46, 112, 161, 71, 90, 248]
+      name: 'buyListedTicket'
+      docs: ['Buy a listed ticket']
+      discriminator: [109, 219, 31, 65, 26, 187, 221, 239]
       accounts: [
         {
-          name: 'user'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'platformAuthority'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'usdtMint'
-        },
-        {
-          name: 'userUsdtAta'
-          writable: true
-        },
-        {
-          name: 'platformUsdtVault'
-          writable: true
-        },
-        {
-          name: 'merchantUsdtVault'
-          writable: true
-        },
-        {
-          name: 'ticketMint'
-          writable: true
-          signer: true
-        },
-        {
-          name: 'userNftAta'
-          writable: true
+          name: 'platformConfig'
           pda: {
             seeds: [
-              {
-                kind: 'account'
-                path: 'user'
-              },
               {
                 kind: 'const'
                 value: [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
                   95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
-              },
-              {
-                kind: 'account'
-                path: 'ticketMint'
-              }
-            ]
-            program: {
-              kind: 'const'
-              value: [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          name: 'mintAuthority'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [77, 73, 78, 84, 95, 65, 85, 84, 72]
-              }
-            ]
-          }
-        },
-        {
-          name: 'seatAccount'
-          writable: true
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [84, 73, 67, 75, 69, 84]
-              },
-              {
-                kind: 'arg'
-                path: 'ticketId'
-              },
-              {
-                kind: 'account'
-                path: 'event'
               }
             ]
           }
@@ -319,45 +139,77 @@ export type TicketingProgram = {
             seeds: [
               {
                 kind: 'const'
-                value: [69, 86, 69, 78, 84]
+                value: [101, 118, 101, 110, 116]
               },
               {
-                kind: 'arg'
-                path: 'eventId'
+                kind: 'account'
+                path: 'ticket.event_id'
+                account: 'ticketAccount'
               }
             ]
           }
         },
         {
-          name: 'platformConfig'
+          name: 'listing'
+          writable: true
+        },
+        {
+          name: 'ticket'
+          writable: true
+        },
+        {
+          name: 'nonceTracker'
+          writable: true
           pda: {
             seeds: [
               {
                 kind: 'const'
                 value: [
-                  80,
-                  76,
-                  65,
-                  84,
-                  70,
-                  79,
-                  82,
-                  77,
+                  110,
+                  111,
+                  110,
+                  99,
+                  101,
                   95,
-                  67,
-                  79,
-                  78,
-                  70,
-                  73,
-                  71
+                  116,
+                  114,
+                  97,
+                  99,
+                  107,
+                  101,
+                  114
                 ]
               }
             ]
           }
         },
         {
-          name: 'systemProgram'
-          address: '11111111111111111111111111111111'
+          name: 'buyer'
+          writable: true
+          signer: true
+        },
+        {
+          name: 'originalSeller'
+          writable: true
+        },
+        {
+          name: 'buyerUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'sellerUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'platformUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'organizerUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'usdcMint'
         },
         {
           name: 'tokenProgram'
@@ -368,179 +220,526 @@ export type TicketingProgram = {
           address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
         },
         {
-          name: 'rent'
-          address: 'SysvarRent111111111111111111111111111111111'
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ]
       args: [
         {
-          name: 'ticketPriceUsdt'
+          name: 'resalePrice'
+          type: 'u64'
+        }
+      ]
+    },
+    {
+      name: 'cancelListing'
+      docs: ['Cancel a ticket listing']
+      discriminator: [41, 183, 50, 232, 230, 233, 157, 70]
+      accounts: [
+        {
+          name: 'listing'
+          writable: true
+        },
+        {
+          name: 'ticket'
+          writable: true
+        },
+        {
+          name: 'seller'
+          writable: true
+          signer: true
+        }
+      ]
+      args: []
+    },
+    {
+      name: 'checkInTicket'
+      docs: ['Check-in a ticket at the event']
+      discriminator: [174, 66, 18, 131, 231, 120, 103, 246]
+      accounts: [
+        {
+          name: 'event'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [101, 118, 101, 110, 116]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              }
+            ]
+          }
+        },
+        {
+          name: 'checkinAuthority'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [99, 104, 101, 99, 107, 105, 110, 95, 97, 117, 116, 104]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              },
+              {
+                kind: 'account'
+                path: 'operator'
+              }
+            ]
+          }
+        },
+        {
+          name: 'ticket'
+          writable: true
+        },
+        {
+          name: 'operator'
+          signer: true
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ]
+      args: [
+        {
+          name: 'eventId'
+          type: 'string'
+        }
+      ]
+    },
+    {
+      name: 'createEvent'
+      docs: ['Create a new event']
+      discriminator: [49, 219, 29, 203, 22, 98, 100, 87]
+      accounts: [
+        {
+          name: 'platformConfig'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'event'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [101, 118, 101, 110, 116]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              }
+            ]
+          }
+        },
+        {
+          name: 'organizer'
+          writable: true
+          signer: true
+        },
+        {
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        }
+      ]
+      args: [
+        {
+          name: 'eventId'
+          type: 'string'
+        },
+        {
+          name: 'metadataUri'
+          type: 'string'
+        },
+        {
+          name: 'startTime'
+          type: 'i64'
+        },
+        {
+          name: 'endTime'
+          type: 'i64'
+        },
+        {
+          name: 'ticketReleaseTime'
+          type: 'i64'
+        },
+        {
+          name: 'stopSaleBefore'
+          type: 'i64'
+        },
+        {
+          name: 'resaleFeeRate'
+          type: 'u16'
+        },
+        {
+          name: 'maxResaleTimes'
+          type: 'u8'
+        }
+      ]
+    },
+    {
+      name: 'initializePlatform'
+      docs: ['Initialize the platform configuration']
+      discriminator: [119, 201, 101, 45, 75, 122, 89, 3]
+      accounts: [
+        {
+          name: 'platformConfig'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'nonceTracker'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  110,
+                  111,
+                  110,
+                  99,
+                  101,
+                  95,
+                  116,
+                  114,
+                  97,
+                  99,
+                  107,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'ticketAuthority'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'deployer'
+          writable: true
+          signer: true
+        },
+        {
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        }
+      ]
+      args: [
+        {
+          name: 'initialFeeReceiver'
+          type: 'pubkey'
+        },
+        {
+          name: 'initialFeeUsdc'
           type: 'u64'
         },
         {
-          name: 'ticketId'
-          type: 'string'
+          name: 'backendAuthority'
+          type: 'pubkey'
         },
         {
-          name: 'eventId'
-          type: 'string'
-        },
-        {
-          name: 'seatNumber'
-          type: 'string'
+          name: 'eventAdmin'
+          type: 'pubkey'
         }
       ]
     },
     {
-      name: 'queryTicketStatus'
-      docs: ['Query ticket status']
-      discriminator: [254, 161, 97, 162, 103, 219, 98, 106]
+      name: 'initializeTicketAuthority'
+      docs: ['Initialize ticket authority for existing deployments']
+      discriminator: [224, 3, 191, 157, 126, 88, 132, 246]
       accounts: [
         {
-          name: 'seatAccount'
+          name: 'platformConfig'
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [84, 73, 67, 75, 69, 84]
-              },
-              {
-                kind: 'arg'
-                path: 'ticketId'
-              },
-              {
-                kind: 'account'
-                path: 'event'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
         },
         {
-          name: 'event'
+          name: 'ticketAuthority'
+          writable: true
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [69, 86, 69, 78, 84]
-              },
-              {
-                kind: 'arg'
-                path: 'eventId'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
               }
             ]
           }
-        }
-      ]
-      args: [
-        {
-          name: 'ticketId'
-          type: 'string'
         },
         {
-          name: 'eventId'
-          type: 'string'
-        }
-      ]
-    },
-    {
-      name: 'scanTicket'
-      docs: ['Scan a ticket']
-      discriminator: [34, 65, 77, 69, 164, 95, 218, 165]
-      accounts: [
-        {
-          name: 'merchant'
+          name: 'authority'
           writable: true
           signer: true
         },
         {
-          name: 'seatAccount'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [84, 73, 67, 75, 69, 84]
-              },
-              {
-                kind: 'arg'
-                path: 'ticketId'
-              },
-              {
-                kind: 'account'
-                path: 'event'
-              }
-            ]
-          }
-        },
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        }
+      ]
+      args: []
+    },
+    {
+      name: 'listTicket'
+      docs: ['List a ticket for resale']
+      discriminator: [11, 213, 240, 45, 246, 35, 44, 162]
+      accounts: [
         {
           name: 'event'
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [69, 86, 69, 78, 84]
+                value: [101, 118, 101, 110, 116]
               },
               {
-                kind: 'arg'
-                path: 'eventId'
+                kind: 'account'
+                path: 'ticket.event_id'
+                account: 'ticketAccount'
               }
             ]
           }
-        }
-      ]
-      args: [
-        {
-          name: 'ticketId'
-          type: 'string'
         },
         {
-          name: 'eventId'
-          type: 'string'
-        }
-      ]
-    },
-    {
-      name: 'updateSeatNumber'
-      docs: ['Update seat number']
-      discriminator: [32, 232, 195, 14, 196, 57, 227, 179]
-      accounts: [
+          name: 'ticket'
+          writable: true
+        },
         {
-          name: 'merchant'
+          name: 'listing'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [108, 105, 115, 116, 105, 110, 103]
+              },
+              {
+                kind: 'account'
+                path: 'ticket'
+              }
+            ]
+          }
+        },
+        {
+          name: 'seller'
           writable: true
           signer: true
         },
         {
-          name: 'mint'
-          writable: true
-        },
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        }
+      ]
+      args: [
         {
-          name: 'mintAuthority'
+          name: 'resalePrice'
+          type: 'u64'
+        }
+      ]
+    },
+    {
+      name: 'purchaseTicket'
+      docs: ['Purchase a ticket with backend authorization']
+      discriminator: [90, 91, 173, 20, 72, 109, 15, 146]
+      accounts: [
+        {
+          name: 'platformConfig'
           pda: {
             seeds: [
               {
                 kind: 'const'
-                value: [77, 73, 78, 84, 95, 65, 85, 84, 72]
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
               }
             ]
           }
         },
         {
-          name: 'seatAccount'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [84, 73, 67, 75, 69, 84]
-              },
-              {
-                kind: 'arg'
-                path: 'ticketId'
-              },
-              {
-                kind: 'account'
-                path: 'event'
-              }
-            ]
-          }
+          name: 'backendAuthority'
+          docs: [
+            'Backend authority must co-sign and match platform_config.backend_authority'
+          ]
+          signer: true
         },
         {
           name: 'event'
@@ -548,7 +747,7 @@ export type TicketingProgram = {
             seeds: [
               {
                 kind: 'const'
-                value: [69, 86, 69, 78, 84]
+                value: [101, 118, 101, 110, 116]
               },
               {
                 kind: 'arg'
@@ -556,239 +755,713 @@ export type TicketingProgram = {
               }
             ]
           }
+        },
+        {
+          name: 'ticket'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [116, 105, 99, 107, 101, 116]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              },
+              {
+                kind: 'arg'
+                path: 'ticketUuid'
+              }
+            ]
+          }
+        },
+        {
+          name: 'nonceTracker'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  110,
+                  111,
+                  110,
+                  99,
+                  101,
+                  95,
+                  116,
+                  114,
+                  97,
+                  99,
+                  107,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'buyer'
+          writable: true
+          signer: true
+        },
+        {
+          name: 'buyerUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'platformUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'organizerUsdcAccount'
+          writable: true
+        },
+        {
+          name: 'usdcMint'
         },
         {
           name: 'tokenProgram'
           address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+        },
+        {
+          name: 'associatedTokenProgram'
+          address: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+        },
+        {
+          name: 'systemProgram'
+          address: '11111111111111111111111111111111'
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing PoF CPI calls']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ]
       args: [
-        {
-          name: 'ticketId'
-          type: 'string'
-        },
         {
           name: 'eventId'
           type: 'string'
         },
         {
-          name: 'newSeatNumber'
+          name: 'typeId'
           type: 'string'
+        },
+        {
+          name: 'ticketUuid'
+          type: 'string'
+        },
+        {
+          name: 'ticketPrice'
+          type: 'u64'
+        },
+        {
+          name: 'rowNumber'
+          type: 'u16'
+        },
+        {
+          name: 'columnNumber'
+          type: 'u16'
+        }
+      ]
+    },
+    {
+      name: 'removeCheckinOperator'
+      docs: ['Remove a check-in operator for an event']
+      discriminator: [213, 251, 202, 174, 169, 182, 184, 241]
+      accounts: [
+        {
+          name: 'platformConfig'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'event'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [101, 118, 101, 110, 116]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              }
+            ]
+          }
+        },
+        {
+          name: 'checkinAuthority'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [99, 104, 101, 99, 107, 105, 110, 95, 97, 117, 116, 104]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              },
+              {
+                kind: 'arg'
+                path: 'operator'
+              }
+            ]
+          }
+        },
+        {
+          name: 'admin'
+          signer: true
+        }
+      ]
+      args: [
+        {
+          name: 'eventId'
+          type: 'string'
+        },
+        {
+          name: 'operator'
+          type: 'pubkey'
+        }
+      ]
+    },
+    {
+      name: 'togglePause'
+      docs: ['Toggle platform pause status']
+      discriminator: [238, 237, 206, 27, 255, 95, 123, 229]
+      accounts: [
+        {
+          name: 'platformConfig'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'authority'
+          signer: true
+        }
+      ]
+      args: []
+    },
+    {
+      name: 'transferAuthority'
+      docs: ['Transfer platform authority to a new address (e.g., multisig)']
+      discriminator: [48, 169, 76, 72, 229, 180, 55, 161]
+      accounts: [
+        {
+          name: 'platformConfig'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'currentAuthority'
+          signer: true
+        }
+      ]
+      args: [
+        {
+          name: 'newAuthority'
+          type: 'pubkey'
+        }
+      ]
+    },
+    {
+      name: 'updateEventStatus'
+      docs: ['Update event status']
+      discriminator: [181, 237, 172, 72, 61, 132, 77, 247]
+      accounts: [
+        {
+          name: 'event'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [101, 118, 101, 110, 116]
+              },
+              {
+                kind: 'arg'
+                path: 'eventId'
+              }
+            ]
+          }
+        },
+        {
+          name: 'organizer'
+          signer: true
+        }
+      ]
+      args: [
+        {
+          name: 'eventId'
+          type: 'string'
+        },
+        {
+          name: 'newStatus'
+          type: 'u8'
+        }
+      ]
+    },
+    {
+      name: 'updatePlatformConfig'
+      docs: ['Update platform configuration']
+      discriminator: [195, 60, 76, 129, 146, 45, 67, 143]
+      accounts: [
+        {
+          name: 'platformConfig'
+          writable: true
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'authority'
+          signer: true
+        }
+      ]
+      args: [
+        {
+          name: 'newFeeReceiver'
+          type: {
+            option: 'pubkey'
+          }
+        },
+        {
+          name: 'newFeeUsdc'
+          type: {
+            option: 'u64'
+          }
+        },
+        {
+          name: 'newBackendAuthority'
+          type: {
+            option: 'pubkey'
+          }
+        },
+        {
+          name: 'newEventAdmin'
+          type: {
+            option: 'pubkey'
+          }
         }
       ]
     }
   ]
   accounts: [
     {
-      name: 'events'
-      discriminator: [65, 3, 213, 60, 248, 78, 29, 92]
+      name: 'checkInAuthority'
+      discriminator: [250, 138, 248, 140, 64, 62, 214, 47]
+    },
+    {
+      name: 'eventAccount'
+      discriminator: [98, 136, 32, 165, 133, 231, 243, 154]
+    },
+    {
+      name: 'listingAccount'
+      discriminator: [59, 89, 136, 25, 21, 196, 183, 13]
+    },
+    {
+      name: 'nonceTracker'
+      discriminator: [244, 104, 52, 45, 43, 120, 94, 13]
     },
     {
       name: 'platformConfig'
       discriminator: [160, 78, 128, 0, 248, 83, 230, 160]
     },
     {
-      name: 'seatStatus'
-      discriminator: [124, 98, 25, 32, 222, 13, 90, 7]
-    }
-  ]
-  events: [
-    {
-      name: 'eventCreated'
-      discriminator: [59, 186, 199, 175, 242, 25, 238, 94]
+      name: 'ticketAccount'
+      discriminator: [231, 93, 13, 18, 239, 66, 21, 45]
     },
     {
-      name: 'platformConfigInitialized'
-      discriminator: [108, 139, 227, 208, 240, 110, 23, 168]
-    },
-    {
-      name: 'seatNumberUpdated'
-      discriminator: [152, 43, 29, 77, 93, 81, 15, 212]
-    },
-    {
-      name: 'ticketMinted'
-      discriminator: [22, 17, 212, 38, 91, 144, 104, 109]
-    },
-    {
-      name: 'ticketScanned'
-      discriminator: [209, 75, 59, 166, 20, 112, 252, 206]
-    },
-    {
-      name: 'ticketStatusQueried'
-      discriminator: [95, 168, 9, 25, 140, 41, 64, 238]
+      name: 'ticketAuthority'
+      discriminator: [165, 9, 207, 147, 201, 225, 2, 103]
     }
   ]
   errors: [
     {
       code: 6000
-      name: 'insufficientFunds'
-      msg: 'Insufficient funds for ticket purchase'
+      name: 'platformPaused'
+      msg: 'Platform is currently paused'
     },
     {
       code: 6001
-      name: 'ticketIdTooLong'
-      msg: 'Ticket ID exceeds maximum length'
+      name: 'unauthorized'
+      msg: 'Unauthorized access'
     },
     {
       code: 6002
-      name: 'eventIdTooLong'
-      msg: 'Event ID exceeds maximum length'
+      name: 'invalidEventStatus'
+      msg: 'Invalid event status'
     },
     {
       code: 6003
-      name: 'seatNumberTooLong'
-      msg: 'Seat number exceeds maximum length'
+      name: 'eventNotActive'
+      msg: 'Event is not active'
     },
     {
       code: 6004
-      name: 'nameTooLong'
-      msg: 'Name exceeds maximum length'
+      name: 'salesNotStarted'
+      msg: 'Ticket sales not started yet'
     },
     {
       code: 6005
-      name: 'symbolTooLong'
-      msg: 'Symbol exceeds maximum length'
+      name: 'salesEnded'
+      msg: 'Ticket sales has ended'
     },
     {
       code: 6006
-      name: 'mintNotInitialized'
-      msg: 'Mint account not properly initialized'
+      name: 'invalidSignature'
+      msg: 'Invalid signature'
     },
     {
       code: 6007
-      name: 'invalidUsdtMint'
-      msg: 'Invalid USDT mint provided'
+      name: 'authorizationExpired'
+      msg: 'Authorization expired'
     },
     {
       code: 6008
-      name: 'invalidUri'
-      msg: 'Invalid URI format or length'
+      name: 'nonceAlreadyUsed'
+      msg: 'Nonce already used'
     },
     {
       code: 6009
-      name: 'extensionInitializationFailed'
-      msg: 'Token-2022 extension initialization failed'
+      name: 'priceMismatch'
+      msg: 'Price mismatch'
     },
     {
       code: 6010
-      name: 'ticketAlreadyMinted'
-      msg: 'Ticket already minted'
+      name: 'alreadyCheckedIn'
+      msg: 'Ticket already checked in'
     },
     {
       code: 6011
+      name: 'notTicketOwner'
+      msg: 'Not ticket owner'
+    },
+    {
+      code: 6012
+      name: 'resaleLimitReached'
+      msg: 'Resale limit reached'
+    },
+    {
+      code: 6013
+      name: 'cannotResellTicket'
+      msg: 'Ticket cannot be resold'
+    },
+    {
+      code: 6014
+      name: 'listingNotActive'
+      msg: 'Listing not active'
+    },
+    {
+      code: 6015
+      name: 'invalidCheckInTime'
+      msg: 'Invalid check-in time'
+    },
+    {
+      code: 6016
+      name: 'checkInOperatorNotAuthorized'
+      msg: 'Check-in operator not authorized'
+    },
+    {
+      code: 6017
       name: 'invalidEventId'
       msg: 'Invalid event ID'
     },
     {
-      code: 6012
-      name: 'invalidPlatformAuthority'
-      msg: 'Invalid platform authority'
-    },
-    {
-      code: 6013
-      name: 'invalidMerchantAuthority'
-      msg: 'Invalid merchant authority'
-    },
-    {
-      code: 6014
-      name: 'unauthorizedAdmin'
-      msg: 'Unauthorized admin'
-    },
-    {
-      code: 6015
-      name: 'eventExpired'
-      msg: 'Event has expired'
-    },
-    {
-      code: 6016
-      name: 'ticketNotMinted'
-      msg: 'Ticket not minted'
-    },
-    {
-      code: 6017
-      name: 'ticketAlreadyScanned'
-      msg: 'Ticket already scanned'
-    },
-    {
       code: 6018
-      name: 'invalidExpiryTimestamp'
-      msg: 'Invalid expiry timestamp'
+      name: 'invalidTicketTypeId'
+      msg: 'Invalid ticket type ID'
     },
     {
       code: 6019
-      name: 'invalidMint'
-      msg: 'Invalid mint account'
+      name: 'arithmeticOverflow'
+      msg: 'Arithmetic overflow'
+    },
+    {
+      code: 6020
+      name: 'invalidTicketPda'
+      msg: 'Invalid ticket PDA in authorization'
     }
   ]
   types: [
     {
-      name: 'eventCreated'
+      name: 'checkInAuthority'
       type: {
         kind: 'struct'
         fields: [
           {
             name: 'eventId'
+            docs: ['Event ID (max 32 chars)']
             type: 'string'
           },
           {
-            name: 'uri'
-            type: 'string'
-          },
-          {
-            name: 'merchantKey'
+            name: 'operator'
+            docs: ['Operator public key']
             type: 'pubkey'
           },
           {
-            name: 'name'
-            type: 'string'
+            name: 'isActive'
+            docs: ['Active status']
+            type: 'bool'
           },
           {
-            name: 'symbol'
-            type: 'string'
-          },
-          {
-            name: 'expiryTimestamp'
-            type: 'i64'
-          },
-          {
-            name: 'timestamp'
-            type: 'i64'
+            name: 'bump'
+            docs: ['PDA bump']
+            type: 'u8'
           }
         ]
       }
     },
     {
-      name: 'events'
+      name: 'eventAccount'
       type: {
         kind: 'struct'
         fields: [
           {
             name: 'eventId'
+            docs: ['Event ID (max 32 chars)']
             type: 'string'
           },
           {
-            name: 'uri'
-            type: 'string'
-          },
-          {
-            name: 'merchantKey'
+            name: 'organizer'
+            docs: ['Event organizer']
             type: 'pubkey'
           },
           {
-            name: 'name'
+            name: 'metadataUri'
+            docs: ['Metadata URI (IPFS, max 200 chars)']
             type: 'string'
           },
           {
-            name: 'symbol'
-            type: 'string'
-          },
-          {
-            name: 'expiryTimestamp'
+            name: 'startTime'
+            docs: ['Event start time (Unix timestamp)']
             type: 'i64'
           },
           {
-            name: 'bump'
+            name: 'endTime'
+            docs: ['Event end time (Unix timestamp)']
+            type: 'i64'
+          },
+          {
+            name: 'ticketReleaseTime'
+            docs: ['Ticket release time (Unix timestamp)']
+            type: 'i64'
+          },
+          {
+            name: 'stopSaleBefore'
+            docs: ['Stop sale before event start (seconds)']
+            type: 'i64'
+          },
+          {
+            name: 'resaleFeeRate'
+            docs: ['Resale fee rate in basis points (100 = 1%)']
+            type: 'u16'
+          },
+          {
+            name: 'maxResaleTimes'
+            docs: ['Maximum resale times allowed']
             type: 'u8'
+          },
+          {
+            name: 'status'
+            docs: ['Event status: 0=Draft, 1=Active, 2=Disabled']
+            type: 'u8'
+          },
+          {
+            name: 'bump'
+            docs: ['PDA bump']
+            type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'listingAccount'
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'ticketPda'
+            docs: ['Ticket PDA']
+            type: 'pubkey'
+          },
+          {
+            name: 'originalSeller'
+            docs: ['Original seller address (ticket owner when listed)']
+            type: 'pubkey'
+          },
+          {
+            name: 'price'
+            docs: ['Listing price in USDC (6 decimals)']
+            type: 'u64'
+          },
+          {
+            name: 'listedAt'
+            docs: ['Listed timestamp']
+            type: 'i64'
+          },
+          {
+            name: 'isActive'
+            docs: ['Active status']
+            type: 'bool'
+          },
+          {
+            name: 'bump'
+            docs: ['PDA bump']
+            type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'nonceTracker'
+      docs: ['Circular buffer for nonce tracking with time-based expiration']
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'nonces'
+            docs: [
+              'Circular buffer of nonces (last 10 entries, good for testing)'
+            ]
+            type: {
+              array: ['u64', 10]
+            }
+          },
+          {
+            name: 'buyers'
+            docs: ['Buyer address for each nonce (for collision prevention)']
+            type: {
+              array: ['pubkey', 10]
+            }
+          },
+          {
+            name: 'timestamps'
+            docs: ['Timestamps for each nonce entry']
+            type: {
+              array: ['i64', 10]
+            }
+          },
+          {
+            name: 'nextIndex'
+            docs: ['Next index to write (circular)']
+            type: 'u16'
           }
         ]
       }
@@ -799,192 +1472,117 @@ export type TicketingProgram = {
         kind: 'struct'
         fields: [
           {
-            name: 'platformAuthority'
+            name: 'feeReceiver'
+            docs: ['Platform fee receiver address']
             type: 'pubkey'
           },
           {
-            name: 'usdtMint'
-            type: 'pubkey'
-          },
-          {
-            name: 'bump'
-            type: 'u8'
-          }
-        ]
-      }
-    },
-    {
-      name: 'platformConfigInitialized'
-      type: {
-        kind: 'struct'
-        fields: [
-          {
-            name: 'platformAuthority'
-            type: 'pubkey'
-          },
-          {
-            name: 'usdtMint'
-            type: 'pubkey'
-          },
-          {
-            name: 'timestamp'
-            type: 'i64'
-          }
-        ]
-      }
-    },
-    {
-      name: 'seatNumberUpdated'
-      type: {
-        kind: 'struct'
-        fields: [
-          {
-            name: 'ticketId'
-            type: 'string'
-          },
-          {
-            name: 'eventId'
-            type: 'string'
-          },
-          {
-            name: 'newSeatNumber'
-            type: 'string'
-          },
-          {
-            name: 'merchant'
-            type: 'pubkey'
-          },
-          {
-            name: 'timestamp'
-            type: 'i64'
-          }
-        ]
-      }
-    },
-    {
-      name: 'seatStatus'
-      type: {
-        kind: 'struct'
-        fields: [
-          {
-            name: 'isMinted'
-            type: 'bool'
-          },
-          {
-            name: 'isScanned'
-            type: 'bool'
-          },
-          {
-            name: 'bump'
-            type: 'u8'
-          }
-        ]
-      }
-    },
-    {
-      name: 'ticketMinted'
-      type: {
-        kind: 'struct'
-        fields: [
-          {
-            name: 'user'
-            type: 'pubkey'
-          },
-          {
-            name: 'mint'
-            type: 'pubkey'
-          },
-          {
-            name: 'ticketId'
-            type: 'string'
-          },
-          {
-            name: 'eventId'
-            type: 'string'
-          },
-          {
-            name: 'ticketPrice'
+            name: 'feeAmountUsdc'
+            docs: ['Platform fee in USDC (6 decimals), e.g., 0.1 USDC = 100000']
             type: 'u64'
           },
           {
-            name: 'merchant'
+            name: 'updateAuthority'
+            docs: ['Update authority (multisig address)']
             type: 'pubkey'
           },
           {
-            name: 'seatNumber'
-            type: 'string'
+            name: 'backendAuthority'
+            docs: ['Backend signing authority']
+            type: 'pubkey'
           },
           {
-            name: 'name'
-            type: 'string'
+            name: 'eventAdmin'
+            docs: ['Event admin (only this address can create events)']
+            type: 'pubkey'
           },
           {
-            name: 'symbol'
-            type: 'string'
+            name: 'isPaused'
+            docs: ['Platform pause status']
+            type: 'bool'
           },
           {
-            name: 'uri'
-            type: 'string'
-          },
-          {
-            name: 'timestamp'
-            type: 'i64'
+            name: 'bump'
+            docs: ['PDA bump']
+            type: 'u8'
           }
         ]
       }
     },
     {
-      name: 'ticketScanned'
+      name: 'ticketAccount'
       type: {
         kind: 'struct'
         fields: [
           {
-            name: 'ticketId'
-            type: 'string'
-          },
-          {
             name: 'eventId'
+            docs: ['Event ID (max 32 chars)']
             type: 'string'
           },
           {
-            name: 'merchant'
+            name: 'ticketTypeId'
+            docs: ['Ticket type ID (max 32 chars)']
+            type: 'string'
+          },
+          {
+            name: 'ticketUuid'
+            docs: ['Ticket UUID (max 32 chars, UUID without hyphens)']
+            type: 'string'
+          },
+          {
+            name: 'owner'
+            docs: ['Current owner']
             type: 'pubkey'
           },
           {
-            name: 'timestamp'
-            type: 'i64'
+            name: 'originalOwner'
+            docs: ['Original owner']
+            type: 'pubkey'
+          },
+          {
+            name: 'resaleCount'
+            docs: ['Resale count']
+            type: 'u8'
+          },
+          {
+            name: 'isCheckedIn'
+            docs: ['Check-in status']
+            type: 'bool'
+          },
+          {
+            name: 'rowNumber'
+            docs: ['Seat row number']
+            type: 'u16'
+          },
+          {
+            name: 'columnNumber'
+            docs: ['Seat column number']
+            type: 'u16'
+          },
+          {
+            name: 'originalPrice'
+            docs: [
+              'Original purchase price (for PoF points calculation on resale)'
+            ]
+            type: 'u64'
+          },
+          {
+            name: 'bump'
+            docs: ['PDA bump']
+            type: 'u8'
           }
         ]
       }
     },
     {
-      name: 'ticketStatusQueried'
+      name: 'ticketAuthority'
+      docs: ['Global ticket authority PDA for signing PoF CPI calls']
       type: {
         kind: 'struct'
         fields: [
           {
-            name: 'ticketId'
-            type: 'string'
-          },
-          {
-            name: 'eventId'
-            type: 'string'
-          },
-          {
-            name: 'uri'
-            type: 'string'
-          },
-          {
-            name: 'isMinted'
-            type: 'bool'
-          },
-          {
-            name: 'isScanned'
-            type: 'bool'
-          },
-          {
-            name: 'timestamp'
-            type: 'i64'
+            name: 'bump'
+            type: 'u8'
           }
         ]
       }

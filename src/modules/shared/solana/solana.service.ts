@@ -28,6 +28,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createInitializeMintInstruction,
   getAssociatedTokenAddress,
+  getOrCreateAssociatedTokenAccount,
   mintTo,
 } from '@solana/spl-token'
 import nacl from 'tweetnacl'
@@ -41,18 +42,22 @@ export class SolanaService {
   private readonly provider: anchor.AnchorProvider
   private readonly platformConfigPDA: PublicKey
   private readonly backendAuthority: Keypair
+  private readonly nonceTracker: PublicKey
+  private readonly usdcMint: PublicKey
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService
   ) {
-    // For sign
-    this.backendAuthority = Keypair.fromSecretKey(
-      Buffer.from(
-        this.configService.get<string>('TICKET_AUTHORITY_SECRET'),
-        'base64'
-      )
-    )
+    // For sign, 签名算法的思路暂时弃用
+    // this.backendAuthority = Keypair.fromSecretKey(
+    //   Buffer.from(
+    //     this.configService.get<string>('TICKET_AUTHORITY_SECRET'),
+    //     'base64'
+    //   )
+    // )
+
+    this.usdcMint = new PublicKey(this.configService.get<string>('USDC_MINT'))
 
     this.provider = anchor.AnchorProvider.env()
     anchor.setProvider(this.provider)
@@ -64,10 +69,28 @@ export class SolanaService {
 
     // Derive platform config PDA
     const [platformConfigPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('PLATFORM_CONFIG')],
+      [Buffer.from('platform_config')],
       this.program.programId
     )
     this.platformConfigPDA = platformConfigPDA
+
+    // Derive nonce tracker PDA
+    const [nonceTracker] = PublicKey.findProgramAddressSync(
+      [Buffer.from('nonce_tracker')],
+      this.program.programId
+    )
+    this.nonceTracker = nonceTracker
+  }
+
+  generateSolanaBase64KeyPairByJSONPrivateKey(jsonPrivateKey: string) {
+    // 1. 将数字数组转换为 Buffer（字节序列）
+    // Buffer.from() 可直接接收 Uint8Array 或数字数组作为参数
+    const privateKeyBuffer = Buffer.from(jsonPrivateKey)
+
+    // 2. 将 Buffer 转换为 Base64 编码字符串
+    const privateKeyBase64 = privateKeyBuffer.toString('base64')
+
+    return privateKeyBase64
   }
 
   generateSolanaKeypair() {
@@ -91,126 +114,6 @@ export class SolanaService {
     }
   }
 
-  async purchaseAndMint(userCustomerId: string, ticketId: string) {
-    const userCustomer = await this.prisma.customer.findUnique({
-      where: {
-        id: userCustomerId,
-      },
-    })
-
-    const ticket = await this.prisma.eventTicket.findUnique({
-      where: {
-        id: ticketId,
-      },
-      include: {
-        event: true,
-      },
-    })
-    if (!ticket) {
-      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
-    }
-
-    // const userPublicKey = new PublicKey(userCustomer.walletId)
-    const fakeUser = Keypair.generate()
-    // await this.connection.requestAirdrop(fakeUser.publicKey, LAMPORTS_PER_SOL)
-    let ticketMintKeypair = Keypair.generate()
-    let ticketMint = ticketMintKeypair.publicKey
-
-    const usdtMint = await createMint(
-      this.connection,
-      this.provider.wallet.payer,
-      this.provider.wallet.publicKey, // mint authority
-      null,
-      6 // USDT decimals
-    )
-
-    const [userUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), fakeUser.publicKey.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
-
-    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
-      TOKEN_PROGRAM_ID
-    )
-
-    const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
-      this.program.programId
-    )
-
-    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('TICKET'),
-        Buffer.from(ticketId.replace(/-/g, '')),
-        eventPDA.toBuffer(),
-      ],
-      this.program.programId
-    )
-
-    // 获取 recentBlockhash（重要：前端必须在有效期内使用）
-    const { blockhash, lastValidBlockHeight } =
-      await this.connection.getLatestBlockhash('confirmed')
-
-    // 创建交易
-    const tx = new Transaction()
-    tx.recentBlockhash = blockhash
-    tx.feePayer = fakeUser.publicKey
-
-    const purchaseAndMintInstruction = await this.program.methods
-      .purchaseAndMint(
-        new anchor.BN(10 * 1e6), // $10 USDT
-        ticket.id.replace(/-/g, ''),
-        ticket.event.id.replace(/-/g, ''),
-        `${ticket.rowNumber}-${ticket.columnNumber}`
-      )
-      .accounts({
-        user: fakeUser.publicKey,
-        platformAuthority: this.platformAuthority,
-        usdtMint,
-        userUsdtAta: userUSDTATA,
-        platformUsdtVault: platformUSDTATA,
-        merchantUsdtVault: Keypair.generate().publicKey, // mock
-        ticketMint,
-        // @ts-ignore
-        userNftAta: Keypair.generate().publicKey,
-        mintAuthority: Keypair.generate().publicKey,
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
-        platformConfig: this.platformConfigPDA,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
-      })
-      .instruction()
-
-    tx.add(purchaseAndMintInstruction)
-
-    // tx.partialSign(fakeUser, this.provider.wallet.payer, ticketMintKeypair)
-
-    tx.partialSign(fakeUser)
-    tx.partialSign(this.provider.wallet.payer)
-    tx.partialSign(ticketMintKeypair)
-
-    const signature = await this.connection.sendRawTransaction(tx.serialize())
-    const strategy = {
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-      commitment: 'confirmed',
-    } as TransactionConfirmationStrategy
-
-    const response = await this.connection.confirmTransaction(strategy)
-
-    // const response = await this.provider.sendAndConfirm(tx, [
-    //   fakeUser,
-    //   this.provider.wallet.payer,
-    //   ticketMintKeypair,
-    // ])
-    return response
-  }
-
   async mintPartialSign(userCustomerId: string, ticketId: string) {
     const userCustomer = await this.prisma.customer.findUnique({
       where: {
@@ -231,37 +134,56 @@ export class SolanaService {
     }
 
     const userPublicKey = new PublicKey(userCustomer.walletId)
-    let ticketMintKeypair = Keypair.generate()
-    let ticketMint = ticketMintKeypair.publicKey
 
-    const usdtMint = await createMint(
-      this.connection,
+    const organizerCustomerId = ticket.event.customerId
+    const organizerCustomer = await this.prisma.customer.findUnique({
+      where: {
+        id: organizerCustomerId,
+      },
+    })
+    if (!organizerCustomer) {
+      throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
+    }
+
+    const organizerPublicKey = new PublicKey(organizerCustomer.walletId)
+
+    // Create USDC token accounts using getOrCreate to avoid duplicates
+    const platformAta = await getOrCreateAssociatedTokenAccount(
+      this.provider.connection,
       this.provider.wallet.payer,
-      this.provider.wallet.publicKey, // mint authority
-      null,
-      6 // USDT decimals
+      this.usdcMint,
+      this.provider.wallet.publicKey
     )
+    const platformUsdcAccount = platformAta.address
 
-    const [userUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), userPublicKey.toBuffer()],
-      TOKEN_PROGRAM_ID
+    // Create ATA for event organizer (deployer is the organizer in tests)
+    const organizerAta = await getOrCreateAssociatedTokenAccount(
+      this.provider.connection,
+      this.provider.wallet.payer,
+      this.usdcMint,
+      organizerPublicKey // deployer is set as event.organizer in create_event
     )
+    const organizerUsdcAccount = organizerAta.address
 
-    const [platformUSDTATA] = PublicKey.findProgramAddressSync(
-      [usdtMint.toBuffer(), this.platformAuthority.toBuffer()],
-      TOKEN_PROGRAM_ID
+    // Create ATAs for buyers using getOrCreate to avoid duplicates
+    const buyerAta = await getOrCreateAssociatedTokenAccount(
+      this.provider.connection,
+      this.provider.wallet.payer,
+      this.usdcMint,
+      userPublicKey
     )
+    const buyerUsdcAccount = buyerAta.address
 
     const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
+      [Buffer.from('event'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
       this.program.programId
     )
 
-    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
+    const [ticketPDA] = PublicKey.findProgramAddressSync(
       [
-        Buffer.from('TICKET'),
+        Buffer.from('ticket'),
+        Buffer.from(ticket.event.id.replace(/-/g, '')),
         Buffer.from(ticketId.replace(/-/g, '')),
-        eventPDA.toBuffer(),
       ],
       this.program.programId
     )
@@ -276,37 +198,35 @@ export class SolanaService {
     tx.feePayer = userPublicKey
 
     const purchaseAndMintInstruction = await this.program.methods
-      .purchaseAndMint(
-        new anchor.BN(10 * 1e6), // $10 USDT
-        ticket.id.replace(/-/g, ''),
+      .purchaseTicket(
         ticket.event.id.replace(/-/g, ''),
-        `${ticket.rowNumber}-${ticket.columnNumber}`
+        ticket.ticketTypeId.replace(/-/g, ''),
+        ticket.id.replace(/-/g, ''),
+        new BN(ticket.price.toNumber()),
+        ticket.rowNumber, // row_number
+        ticket.columnNumber // column_number
       )
       .accounts({
-        user: userPublicKey,
-        platformAuthority: this.platformAuthority,
-        usdtMint,
-        userUsdtAta: userUSDTATA,
-        platformUsdtVault: platformUSDTATA,
-        merchantUsdtVault: Keypair.generate().publicKey, // mock
-        ticketMint,
         // @ts-ignore
-        userNftAta: Keypair.generate().publicKey,
-        mintAuthority: Keypair.generate().publicKey,
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
         platformConfig: this.platformConfigPDA,
-        systemProgram: SystemProgram.programId,
+        backendAuthority: this.provider.wallet.publicKey,
+        event: eventPDA,
+        ticket: ticketPDA,
+        nonceTracker: this.nonceTracker,
+        buyer: userPublicKey,
+        buyerUsdcAccount: buyerUsdcAccount,
+        platformUsdcAccount: platformUsdcAccount,
+        organizerUsdcAccount: organizerUsdcAccount,
+        usdcMint: this.usdcMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-        rent: SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
       })
       .instruction()
 
     tx.add(purchaseAndMintInstruction)
 
     tx.partialSign(this.provider.wallet.payer)
-    tx.partialSign(ticketMintKeypair)
 
     // 序列化交易消息（不包含签名），供前端部分签名
     const serializedTx = tx
@@ -343,25 +263,27 @@ export class SolanaService {
     })
     const merchantPublicKey = new PublicKey(customer.walletId)
     const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(eventId.replace(/-/g, ''))],
+      [Buffer.from('event'), Buffer.from(eventId.replace(/-/g, ''))],
       this.program.programId
     )
 
+    const now = Math.floor(Date.now() / 1000)
     const tx = await this.program.methods
       .createEvent(
         eventId.replace(/-/g, ''),
         event.ipfsUri,
-        merchantPublicKey,
-        event.name,
-        event.symbol,
-        new BN(event.endTime.getTime() / 1000) // tomorrow
+        new BN(event.startTime.getTime() / 1000),
+        new BN(event.endTime.getTime() / 1000),
+        new BN(now),
+        new BN(event.stopSaleBefore * 60),
+        event.resaleFeeRate,
+        event.maxResaleTimes
       )
       .accounts({
-        payer: this.provider.wallet.publicKey,
         // @ts-ignore
-        event: eventPDA,
         platformConfig: this.platformConfigPDA,
-        platformAuthority: this.platformAuthority,
+        event: eventPDA,
+        organizer: this.platformAuthority,
         systemProgram: SystemProgram.programId,
       })
       .rpc()
@@ -432,55 +354,6 @@ export class SolanaService {
     )
     console.log('isSigner', isSigner)
     // return tx
-  }
-
-  async scanTicket(ticketId: string, merchantId: string) {
-    const ticket = await this.prisma.eventTicket.findUnique({
-      where: {
-        id: ticketId,
-      },
-      include: {
-        event: true,
-      },
-    })
-    if (!ticket) {
-      throw new ApiException(ERROR_EVENT_TICKET_NOT_FOUND)
-    }
-    const merchant = await this.prisma.customer.findUnique({
-      where: {
-        id: merchantId,
-      },
-    })
-    if (!merchant) {
-      throw new ApiException(ERROR_CUSTOMER_NOT_FOUND)
-    }
-    const merchantPublicKey = new PublicKey(merchant.walletId)
-    const [eventPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('EVENT'), Buffer.from(ticket.event.id.replace(/-/g, ''))],
-      this.program.programId
-    )
-    const [seatAccountPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('TICKET'),
-        Buffer.from(ticketId.replace(/-/g, '')),
-        eventPDA.toBuffer(),
-      ],
-      this.program.programId
-    )
-    const tx = await this.program.methods
-      .scanTicket(
-        ticket.id.replace(/-/g, ''),
-        ticket.event.id.replace(/-/g, '')
-      )
-      .accounts({
-        merchant: merchantPublicKey,
-        // @ts-ignore
-        seatAccount: seatAccountPDA,
-        event: eventPDA,
-      })
-      // .signers([merchantPublicKey])
-      .rpc()
-    return tx
   }
 
   signPurchaseAuthorization(

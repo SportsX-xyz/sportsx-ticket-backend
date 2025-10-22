@@ -11,15 +11,6 @@ export class CheckinVerifyDto {
   })
   @IsString()
   ticketCode: string
-
-  @ApiProperty({ description: 'CheckInTxHash' })
-  @IsNotEmpty({
-    message: i18nValidationMessage('validation.notEmpty', {
-      field: 'checkInTxHash',
-    }),
-  })
-  @IsString()
-  checkInTxHash: string
 }
 
 export class CheckinDto {
