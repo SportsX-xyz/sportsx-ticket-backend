@@ -14,7 +14,17 @@ import { registerAdminSwagger } from './registerAdminSwagger'
 async function bootstrap() {
   const adapter = new FastifyAdapter()
   adapter.enableCors({
-    origin: ['*'],
+    origin: [
+      // localhost 所有端口
+      /^https?:\/\/localhost(:\d+)?$/,
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+      // *.tortorcoin 所有子域名
+      /^https?:\/\/[^.]*\.tortorcoin\.com$/,
+      /^https?:\/\/tortorcoin\.com$/,
+      // *.sportsx.fun 所有子域名
+      /^https?:\/\/[^.]*\.sportsx\.fun$/,
+      /^https?:\/\/sportsx\.fun$/,
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: [
       'Origin',
