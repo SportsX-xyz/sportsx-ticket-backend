@@ -30,6 +30,7 @@ import {
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
   mintTo,
+  TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token'
 import nacl from 'tweetnacl'
 import bs58 from 'bs58'
@@ -229,7 +230,7 @@ export class SolanaService {
         platformUsdcAccount: platformUsdcAccount,
         organizerUsdcAccount: organizerUsdcAccount,
         usdcMint: this.usdcMint,
-        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
         associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
       })
