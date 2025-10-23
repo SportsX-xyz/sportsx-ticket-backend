@@ -6,6 +6,7 @@ model EventStaff {
   staff      Customer @relation(fields: [staffId], references: [id], name: "StaffUser")
   operatorId String
   operator   Customer @relation(fields: [operatorId], references: [id], name: "Operator")
+  txHash     String?  @db.VarChar(255)
   createdAt  DateTime @default(now()) @db.Timestamptz
   updatedAt  DateTime @updatedAt @db.Timestamptz
 

@@ -47,5 +47,7 @@
   "event.ticket.order.not.buyer": "Event ticket order not buyer",
   "event.ticket.not.lock": "Event ticket not lock",
   "event.ticket.order.already.on.chain": "Event ticket order already on chain",
-  "event.ticket.not.sold": "Event ticket not sold"
+  "event.ticket.not.sold": "Event ticket not sold",
+  "event.staff.add.checkin.operator.failed": "Event staff add checkin operator failed",
+  "event.staff.remove.checkin.operator.failed": "Event staff remove checkin operator failed"
 }

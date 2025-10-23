@@ -50,6 +50,8 @@ export const ERROR_EVENT_TICKET_ORDER_NOT_BUYER = 22033
 export const ERROR_EVENT_TICKET_NOT_LOCK = 22034
 export const ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN = 22035
 export const ERROR_EVENT_TICKET_NOT_SOLD = 22036
+export const ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED = 22037
+export const ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED = 22038
 
 export const ErrorCodeMap = {
   // 10000-19999 系统内部错误
@@ -115,4 +117,8 @@ export const ErrorCodeMap = {
   [ERROR_EVENT_TICKET_ORDER_ALREADY_ON_CHAIN]:
     'event.ticket.order.already.on.chain',
   [ERROR_EVENT_TICKET_NOT_SOLD]: 'event.ticket.not.sold',
+  [ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED]:
+    'event.staff.add.checkin.operator.failed',
+  [ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED]:
+    'event.staff.remove.checkin.operator.failed',
 }

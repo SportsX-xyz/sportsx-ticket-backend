@@ -17,7 +17,9 @@ import {
   ERROR_EVENT_PINATA_JSON_DUPLICATE,
   ERROR_EVENT_PINATA_JSON_INVALID,
   ERROR_EVENT_SOLANA_TX_HASH_NOT_FOUND,
+  ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED,
   ERROR_EVENT_STAFF_ALREADY_EXISTS,
+  ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED,
   ERROR_EVENT_SYMBOL_NOT_FOUND,
   ERROR_EVENT_TICKET_NOT_FOUND,
   ERROR_EVENT_TICKET_STATUS_NOT_ALLOWED_UPDATE,
@@ -695,6 +697,15 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_STAFF_ALREADY_EXISTS)
     }
 
+    const tx = await this.solanaService.addCheckinOperator(
+      eventId,
+      staffCustomer.id
+    )
+
+    if (!tx) {
+      throw new ApiException(ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED)
+    }
+
     return this.prisma.eventStaff.create({
       data: {
         event: {
@@ -712,6 +723,7 @@ export class OrganizerService {
             id: customerId,
           },
         },
+        txHash: tx,
       },
     })
   }
@@ -786,6 +798,12 @@ export class OrganizerService {
 
     if (event.customerId !== customerId) {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
+    }
+
+    const tx = await this.solanaService.removeCheckinOperator(eventId, staffId)
+
+    if (!tx) {
+      throw new ApiException(ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED)
     }
 
     return this.prisma.eventStaff.delete({

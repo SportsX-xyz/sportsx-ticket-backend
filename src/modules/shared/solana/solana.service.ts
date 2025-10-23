@@ -307,6 +307,76 @@ export class SolanaService {
     // console.log('Event created:', eventInfo)
   }
 
+  async removeCheckinOperator(eventId: string, staffId: string) {
+    const staff = await this.prisma.customer.findUnique({
+      where: {
+        id: staffId,
+      },
+    })
+    const staffPublicKey = new PublicKey(staff.walletId)
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('event'), Buffer.from(eventId.replace(/-/g, ''))],
+      this.program.programId
+    )
+    const [checkinAuthorityPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('checkin_auth'),
+        Buffer.from(eventId.replace(/-/g, '')),
+        staffPublicKey.toBuffer(),
+      ],
+      this.program.programId
+    )
+
+    const tx = await this.program.methods
+      .removeCheckinOperator(eventId.replace(/-/g, ''), staffPublicKey)
+      .accounts({
+        // @ts-ignore
+        platformConfig: this.platformConfigPDA,
+        event: eventPDA,
+        checkinAuthority: checkinAuthorityPda,
+        admin: this.platformAuthority,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc()
+
+    return tx
+  }
+
+  async addCheckinOperator(eventId: string, staffId: string) {
+    const staff = await this.prisma.customer.findUnique({
+      where: {
+        id: staffId,
+      },
+    })
+    const staffPublicKey = new PublicKey(staff.walletId)
+    const [eventPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('event'), Buffer.from(eventId.replace(/-/g, ''))],
+      this.program.programId
+    )
+    const [checkinAuthorityPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('checkin_auth'),
+        Buffer.from(eventId.replace(/-/g, '')),
+        staffPublicKey.toBuffer(),
+      ],
+      this.program.programId
+    )
+
+    const tx = await this.program.methods
+      .addCheckinOperator(eventId.replace(/-/g, ''), staffPublicKey)
+      .accounts({
+        // @ts-ignore
+        platformConfig: this.platformConfigPDA,
+        event: eventPDA,
+        checkinAuthority: checkinAuthorityPda,
+        admin: this.platformAuthority,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc()
+
+    return tx
+  }
+
   /**
    * 获取 Solana 连接实例
    */
