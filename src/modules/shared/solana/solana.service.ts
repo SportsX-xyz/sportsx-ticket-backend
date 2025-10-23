@@ -147,6 +147,14 @@ export class SolanaService {
 
     const organizerPublicKey = new PublicKey(organizerCustomer.walletId)
 
+    // Create ticket NFT mint (buyer provides the keypair)
+    const ticketMintKeypair = Keypair.generate()
+    // Create buyer's ticket NFT token account
+    const buyerTicketAccount = await getAssociatedTokenAddress(
+      ticketMintKeypair.publicKey,
+      userPublicKey
+    )
+
     // Create USDC token accounts using getOrCreate to avoid duplicates
     const platformAta = await getOrCreateAssociatedTokenAccount(
       this.provider.connection,
@@ -214,6 +222,9 @@ export class SolanaService {
         ticket: ticketPDA,
         nonceTracker: this.nonceTracker,
         buyer: userPublicKey,
+        ticketMint: ticketMintKeypair.publicKey,
+        buyerTicketAccount: buyerTicketAccount,
+        rent: SYSVAR_RENT_PUBKEY,
         buyerUsdcAccount: buyerUsdcAccount,
         platformUsdcAccount: platformUsdcAccount,
         organizerUsdcAccount: organizerUsdcAccount,
