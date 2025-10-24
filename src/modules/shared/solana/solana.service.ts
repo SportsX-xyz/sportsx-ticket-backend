@@ -267,7 +267,7 @@ export class SolanaService {
     tx.add(purchaseAndMintInstruction)
 
     tx.partialSign(this.provider.wallet.payer)
-    tx.sign(ticketMintKeypair)
+    tx.partialSign(ticketMintKeypair)
 
     // 序列化交易消息（不包含签名），供前端部分签名
     const serializedTx = tx
