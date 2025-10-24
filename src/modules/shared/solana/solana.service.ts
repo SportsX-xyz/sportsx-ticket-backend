@@ -45,6 +45,8 @@ export class SolanaService {
   private readonly backendAuthority: Keypair
   private readonly nonceTracker: PublicKey
   private readonly usdcMint: PublicKey
+  private readonly mintAuthority: PublicKey
+  private readonly ticketAuthorityPda: PublicKey
 
   constructor(
     private readonly configService: ConfigService,
@@ -81,6 +83,17 @@ export class SolanaService {
       this.program.programId
     )
     this.nonceTracker = nonceTracker
+
+    const [mintAuthority] = PublicKey.findProgramAddressSync(
+      [Buffer.from('mint_authority')],
+      this.program.programId
+    )
+    this.mintAuthority = mintAuthority
+    const [ticketAuthorityPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('ticket_authority')],
+      this.program.programId
+    )
+    this.ticketAuthorityPda = ticketAuthorityPda
   }
 
   generateSolanaBase64KeyPairByJSONPrivateKey(jsonPrivateKey: string) {
@@ -153,7 +166,9 @@ export class SolanaService {
     // Create buyer's ticket NFT token account
     const buyerTicketAccount = await getAssociatedTokenAddress(
       ticketMintKeypair.publicKey,
-      userPublicKey
+      userPublicKey,
+      false,
+      TOKEN_2022_PROGRAM_ID
     )
 
     // Create USDC token accounts using getOrCreate to avoid duplicates
@@ -224,15 +239,18 @@ export class SolanaService {
         nonceTracker: this.nonceTracker,
         buyer: userPublicKey,
         ticketMint: ticketMintKeypair.publicKey,
+        mintAuthority: this.mintAuthority,
         buyerTicketAccount: buyerTicketAccount,
         rent: SYSVAR_RENT_PUBKEY,
         buyerUsdcAccount: buyerUsdcAccount,
         platformUsdcAccount: platformUsdcAccount,
         organizerUsdcAccount: organizerUsdcAccount,
         usdcMint: this.usdcMint,
+        usdcTokenProgram: TOKEN_PROGRAM_ID,
         tokenProgram: TOKEN_2022_PROGRAM_ID,
         associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
+        ticketAuthority: this.ticketAuthorityPda,
       })
       .instruction()
 
@@ -258,7 +276,6 @@ export class SolanaService {
     //   usdtMint: usdtMint.toString(),
     //   ticketMint: ticketMint.toString(),
     // }
-
     return serializedTx
   }
 
@@ -283,6 +300,8 @@ export class SolanaService {
     const tx = await this.program.methods
       .createEvent(
         eventId.replace(/-/g, ''),
+        event.name,
+        event.symbol,
         event.ipfsUri,
         new BN(event.startTime.getTime() / 1000),
         new BN(event.endTime.getTime() / 1000),

@@ -193,6 +193,18 @@ export type TicketingProgram = {
           writable: true
         },
         {
+          name: 'ticketMint'
+          writable: true
+        },
+        {
+          name: 'sellerTicketAccount'
+          writable: true
+        },
+        {
+          name: 'buyerTicketAccount'
+          writable: true
+        },
+        {
           name: 'buyerUsdcAccount'
           writable: true
         },
@@ -213,7 +225,6 @@ export type TicketingProgram = {
         },
         {
           name: 'tokenProgram'
-          address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
         },
         {
           name: 'associatedTokenProgram'
@@ -273,6 +284,50 @@ export type TicketingProgram = {
           name: 'seller'
           writable: true
           signer: true
+        },
+        {
+          name: 'ticketMint'
+          writable: true
+        },
+        {
+          name: 'programTicketAccount'
+          writable: true
+        },
+        {
+          name: 'sellerTicketAccount'
+          writable: true
+        },
+        {
+          name: 'ticketAuthority'
+          docs: ['Ticket authority PDA for signing transfers']
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  116,
+                  105,
+                  99,
+                  107,
+                  101,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'tokenProgram'
         }
       ]
       args: []
@@ -321,6 +376,14 @@ export type TicketingProgram = {
           writable: true
         },
         {
+          name: 'ticketMint'
+          writable: true
+        },
+        {
+          name: 'ticketOwnerTokenAccount'
+          writable: true
+        },
+        {
           name: 'operator'
           signer: true
         },
@@ -352,6 +415,9 @@ export type TicketingProgram = {
               }
             ]
           }
+        },
+        {
+          name: 'tokenProgram'
         }
       ]
       args: [
@@ -422,6 +488,14 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
+          type: 'string'
+        },
+        {
+          name: 'name'
+          type: 'string'
+        },
+        {
+          name: 'symbol'
           type: 'string'
         },
         {
@@ -808,6 +882,47 @@ export type TicketingProgram = {
           signer: true
         },
         {
+          name: 'ticketMint'
+          docs: [
+            'NFT mint address (provided by buyer as signer for account creation)'
+          ]
+          writable: true
+          signer: true
+        },
+        {
+          name: 'mintAuthority'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          name: 'buyerTicketAccount'
+          writable: true
+        },
+        {
+          name: 'rent'
+        },
+        {
           name: 'buyerUsdcAccount'
           writable: true
         },
@@ -823,8 +938,14 @@ export type TicketingProgram = {
           name: 'usdcMint'
         },
         {
-          name: 'tokenProgram'
+          name: 'usdcTokenProgram'
+          docs: ['USDC Token program (for USDC transfers)']
           address: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+        },
+        {
+          name: 'tokenProgram'
+          docs: ['Token 2022 program (for NFT minting)']
+          address: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'
         },
         {
           name: 'associatedTokenProgram'
@@ -832,6 +953,7 @@ export type TicketingProgram = {
         },
         {
           name: 'systemProgram'
+          docs: ['System program']
           address: '11111111111111111111111111111111'
         },
         {
@@ -1297,6 +1419,11 @@ export type TicketingProgram = {
       code: 6020
       name: 'invalidTicketPda'
       msg: 'Invalid ticket PDA in authorization'
+    },
+    {
+      code: 6021
+      name: 'invalidMintAccountSpace'
+      msg: 'Invalid mint account space'
     }
   ]
   types: [
@@ -1336,6 +1463,16 @@ export type TicketingProgram = {
           {
             name: 'eventId'
             docs: ['Event ID (max 32 chars)']
+            type: 'string'
+          },
+          {
+            name: 'name'
+            docs: ['Event name (max 50 chars)']
+            type: 'string'
+          },
+          {
+            name: 'symbol'
+            docs: ['Event symbol (max 10 chars)']
             type: 'string'
           },
           {
