@@ -31,6 +31,7 @@ import {
   getOrCreateAssociatedTokenAccount,
   mintTo,
   TOKEN_2022_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
 } from '@solana/spl-token'
 import nacl from 'tweetnacl'
 import bs58 from 'bs58'
@@ -170,31 +171,40 @@ export class SolanaService {
       false,
       TOKEN_2022_PROGRAM_ID
     )
-
     // Create USDC token accounts using getOrCreate to avoid duplicates
     const platformAta = await getOrCreateAssociatedTokenAccount(
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      this.provider.wallet.publicKey
+      this.provider.wallet.publicKey,
+      false,
+      'confirmed',
+      undefined,
+      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
     )
     const platformUsdcAccount = platformAta.address
-
     // Create ATA for event organizer (deployer is the organizer in tests)
     const organizerAta = await getOrCreateAssociatedTokenAccount(
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      organizerPublicKey // deployer is set as event.organizer in create_event
+      organizerPublicKey, // deployer is set as event.organizer in create_event
+      false,
+      'confirmed',
+      undefined,
+      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
     )
     const organizerUsdcAccount = organizerAta.address
-
     // Create ATAs for buyers using getOrCreate to avoid duplicates
     const buyerAta = await getOrCreateAssociatedTokenAccount(
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      userPublicKey
+      userPublicKey,
+      false,
+      'confirmed',
+      undefined,
+      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
     )
     const buyerUsdcAccount = buyerAta.address
 
