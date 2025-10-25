@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/ticketing_program.json`.
  */
 export type TicketingProgram = {
-  address: 'EFuMNTn1zfn6Zhvdq1Vjaxs83sz2gTWvDgjuJcKDYjhw'
+  address: 'Ac3MCk6XeuHxq1m17TVvnSnjgpn6AgRD9WgLGR9cUKoH'
   metadata: {
     name: 'ticketingProgram'
     version: '0.1.0'
@@ -93,7 +93,9 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'operator'
@@ -135,19 +137,6 @@ export type TicketingProgram = {
         },
         {
           name: 'event'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [101, 118, 101, 110, 116]
-              },
-              {
-                kind: 'account'
-                path: 'ticket.event_id'
-                account: 'ticketAccount'
-              }
-            ]
-          }
         },
         {
           name: 'listing'
@@ -488,7 +477,9 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'name'
@@ -725,19 +716,6 @@ export type TicketingProgram = {
       accounts: [
         {
           name: 'event'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [101, 118, 101, 110, 116]
-              },
-              {
-                kind: 'account'
-                path: 'ticket.event_id'
-                account: 'ticketAccount'
-              }
-            ]
-          }
         },
         {
           name: 'ticket'
@@ -989,15 +967,15 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
-          type: 'string'
-        },
-        {
-          name: 'typeId'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'ticketUuid'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'ticketPrice'
@@ -1088,7 +1066,9 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'operator'
@@ -1210,7 +1190,9 @@ export type TicketingProgram = {
       args: [
         {
           name: 'eventId'
-          type: 'string'
+          type: {
+            array: ['u8', 32]
+          }
         },
         {
           name: 'newStatus'
@@ -1434,8 +1416,10 @@ export type TicketingProgram = {
         fields: [
           {
             name: 'eventId'
-            docs: ['Event ID (max 32 chars)']
-            type: 'string'
+            docs: ['Event ID (32 bytes)']
+            type: {
+              array: ['u8', 32]
+            }
           },
           {
             name: 'operator'
@@ -1462,8 +1446,10 @@ export type TicketingProgram = {
         fields: [
           {
             name: 'eventId'
-            docs: ['Event ID (max 32 chars)']
-            type: 'string'
+            docs: ['Event ID (32 bytes)']
+            type: {
+              array: ['u8', 32]
+            }
           },
           {
             name: 'name'
@@ -1575,24 +1561,24 @@ export type TicketingProgram = {
           {
             name: 'nonces'
             docs: [
-              'Circular buffer of nonces (last 10 entries, good for testing)'
+              'Circular buffer of nonces (last 5 entries, reduced for stack optimization)'
             ]
             type: {
-              array: ['u64', 10]
+              array: ['u64', 5]
             }
           },
           {
             name: 'buyers'
             docs: ['Buyer address for each nonce (for collision prevention)']
             type: {
-              array: ['pubkey', 10]
+              array: ['pubkey', 5]
             }
           },
           {
             name: 'timestamps'
             docs: ['Timestamps for each nonce entry']
             type: {
-              array: ['i64', 10]
+              array: ['i64', 5]
             }
           },
           {
@@ -1653,18 +1639,17 @@ export type TicketingProgram = {
         fields: [
           {
             name: 'eventId'
-            docs: ['Event ID (max 32 chars)']
-            type: 'string'
-          },
-          {
-            name: 'ticketTypeId'
-            docs: ['Ticket type ID (max 32 chars)']
-            type: 'string'
+            docs: ['Event ID (32 bytes)']
+            type: {
+              array: ['u8', 32]
+            }
           },
           {
             name: 'ticketUuid'
-            docs: ['Ticket UUID (max 32 chars, UUID without hyphens)']
-            type: 'string'
+            docs: ['Ticket UUID (32 bytes, UUID without hyphens)']
+            type: {
+              array: ['u8', 32]
+            }
           },
           {
             name: 'owner'

@@ -697,14 +697,14 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_STAFF_ALREADY_EXISTS)
     }
 
-    const tx = await this.solanaService.addCheckinOperator(
-      eventId,
-      staffCustomer.id
-    )
+    // const tx = await this.solanaService.addCheckinOperator(
+    //   eventId,
+    //   staffCustomer.id
+    // )
 
-    if (!tx) {
-      throw new ApiException(ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED)
-    }
+    // if (!tx) {
+    //   throw new ApiException(ERROR_EVENT_STAFF_ADD_CHECKIN_OPERATOR_FAILED)
+    // }
 
     return this.prisma.eventStaff.create({
       data: {
@@ -723,7 +723,7 @@ export class OrganizerService {
             id: customerId,
           },
         },
-        txHash: tx,
+        // txHash: tx,
       },
     })
   }
@@ -800,11 +800,11 @@ export class OrganizerService {
       throw new ApiException(ERROR_EVENT_NOT_BELONG_TO_YOU)
     }
 
-    const tx = await this.solanaService.removeCheckinOperator(eventId, staffId)
+    // const tx = await this.solanaService.removeCheckinOperator(eventId, staffId)
 
-    if (!tx) {
-      throw new ApiException(ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED)
-    }
+    // if (!tx) {
+    //   throw new ApiException(ERROR_EVENT_STAFF_REMOVE_CHECKIN_OPERATOR_FAILED)
+    // }
 
     return this.prisma.eventStaff.delete({
       where: {

@@ -1,5 +1,5 @@
 {
-  "address": "EFuMNTn1zfn6Zhvdq1Vjaxs83sz2gTWvDgjuJcKDYjhw",
+  "address": "Ac3MCk6XeuHxq1m17TVvnSnjgpn6AgRD9WgLGR9cUKoH",
   "metadata": {
     "name": "ticketing_program",
     "version": "0.1.0",
@@ -76,7 +76,9 @@
       "args": [
         {
           "name": "event_id",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "operator",
@@ -104,20 +106,7 @@
           }
         },
         {
-          "name": "event",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [101, 118, 101, 110, 116]
-              },
-              {
-                "kind": "account",
-                "path": "ticket.event_id",
-                "account": "TicketAccount"
-              }
-            ]
-          }
+          "name": "event"
         },
         {
           "name": "listing",
@@ -393,7 +382,9 @@
       "args": [
         {
           "name": "event_id",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "name",
@@ -563,20 +554,7 @@
       "discriminator": [11, 213, 240, 45, 246, 35, 44, 162],
       "accounts": [
         {
-          "name": "event",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [101, 118, 101, 110, 116]
-              },
-              {
-                "kind": "account",
-                "path": "ticket.event_id",
-                "account": "TicketAccount"
-              }
-            ]
-          }
+          "name": "event"
         },
         {
           "name": "ticket",
@@ -777,15 +755,15 @@
       "args": [
         {
           "name": "event_id",
-          "type": "string"
-        },
-        {
-          "name": "type_id",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "ticket_uuid",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "ticket_price",
@@ -865,7 +843,9 @@
       "args": [
         {
           "name": "event_id",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "operator",
@@ -961,7 +941,9 @@
       "args": [
         {
           "name": "event_id",
-          "type": "string"
+          "type": {
+            "array": ["u8", 32]
+          }
         },
         {
           "name": "new_status",
@@ -1172,8 +1154,10 @@
         "fields": [
           {
             "name": "event_id",
-            "docs": ["Event ID (max 32 chars)"],
-            "type": "string"
+            "docs": ["Event ID (32 bytes)"],
+            "type": {
+              "array": ["u8", 32]
+            }
           },
           {
             "name": "operator",
@@ -1200,8 +1184,10 @@
         "fields": [
           {
             "name": "event_id",
-            "docs": ["Event ID (max 32 chars)"],
-            "type": "string"
+            "docs": ["Event ID (32 bytes)"],
+            "type": {
+              "array": ["u8", 32]
+            }
           },
           {
             "name": "name",
@@ -1313,24 +1299,24 @@
           {
             "name": "nonces",
             "docs": [
-              "Circular buffer of nonces (last 10 entries, good for testing)"
+              "Circular buffer of nonces (last 5 entries, reduced for stack optimization)"
             ],
             "type": {
-              "array": ["u64", 10]
+              "array": ["u64", 5]
             }
           },
           {
             "name": "buyers",
             "docs": ["Buyer address for each nonce (for collision prevention)"],
             "type": {
-              "array": ["pubkey", 10]
+              "array": ["pubkey", 5]
             }
           },
           {
             "name": "timestamps",
             "docs": ["Timestamps for each nonce entry"],
             "type": {
-              "array": ["i64", 10]
+              "array": ["i64", 5]
             }
           },
           {
@@ -1393,18 +1379,17 @@
         "fields": [
           {
             "name": "event_id",
-            "docs": ["Event ID (max 32 chars)"],
-            "type": "string"
-          },
-          {
-            "name": "ticket_type_id",
-            "docs": ["Ticket type ID (max 32 chars)"],
-            "type": "string"
+            "docs": ["Event ID (32 bytes)"],
+            "type": {
+              "array": ["u8", 32]
+            }
           },
           {
             "name": "ticket_uuid",
-            "docs": ["Ticket UUID (max 32 chars, UUID without hyphens)"],
-            "type": "string"
+            "docs": ["Ticket UUID (32 bytes, UUID without hyphens)"],
+            "type": {
+              "array": ["u8", 32]
+            }
           },
           {
             "name": "owner",

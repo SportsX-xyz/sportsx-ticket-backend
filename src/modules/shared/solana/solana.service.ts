@@ -176,11 +176,7 @@ export class SolanaService {
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      this.provider.wallet.publicKey,
-      false,
-      'confirmed',
-      undefined,
-      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
+      this.provider.wallet.publicKey
     )
     const platformUsdcAccount = platformAta.address
     // Create ATA for event organizer (deployer is the organizer in tests)
@@ -188,11 +184,7 @@ export class SolanaService {
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      organizerPublicKey, // deployer is set as event.organizer in create_event
-      false,
-      'confirmed',
-      undefined,
-      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
+      organizerPublicKey // deployer is set as event.organizer in create_event
     )
     const organizerUsdcAccount = organizerAta.address
     // Create ATAs for buyers using getOrCreate to avoid duplicates
@@ -200,11 +192,7 @@ export class SolanaService {
       this.provider.connection,
       this.provider.wallet.payer,
       this.usdcMint,
-      userPublicKey,
-      false,
-      'confirmed',
-      undefined,
-      TOKEN_2022_PROGRAM_ID // USDC 是标准 SPL Token
+      userPublicKey
     )
     const buyerUsdcAccount = buyerAta.address
 
@@ -233,9 +221,10 @@ export class SolanaService {
 
     const purchaseAndMintInstruction = await this.program.methods
       .purchaseTicket(
-        ticket.event.id.replace(/-/g, ''),
-        ticket.ticketTypeId.replace(/-/g, ''),
-        ticket.id.replace(/-/g, ''),
+        // @ts-ignore
+        Buffer.from(ticket.event.id.replace(/-/g, '')),
+        // @ts-ignore
+        Buffer.from(ticket.id.replace(/-/g, '')),
         new BN(ticket.price.toNumber()),
         ticket.rowNumber, // row_number
         ticket.columnNumber // column_number
@@ -310,7 +299,8 @@ export class SolanaService {
     const now = Math.floor(Date.now() / 1000)
     const tx = await this.program.methods
       .createEvent(
-        eventId.replace(/-/g, ''),
+        // @ts-ignore
+        Buffer.from(eventId.replace(/-/g, '')),
         event.name,
         event.symbol,
         event.ipfsUri,
@@ -370,7 +360,11 @@ export class SolanaService {
     )
 
     const tx = await this.program.methods
-      .removeCheckinOperator(eventId.replace(/-/g, ''), staffPublicKey)
+      .removeCheckinOperator(
+        // @ts-ignore
+        Buffer.from(eventId.replace(/-/g, '')),
+        staffPublicKey
+      )
       .accounts({
         // @ts-ignore
         platformConfig: this.platformConfigPDA,
@@ -405,7 +399,11 @@ export class SolanaService {
     )
 
     const tx = await this.program.methods
-      .addCheckinOperator(eventId.replace(/-/g, ''), staffPublicKey)
+      .addCheckinOperator(
+        // @ts-ignore
+        Buffer.from(eventId.replace(/-/g, '')),
+        staffPublicKey
+      )
       .accounts({
         // @ts-ignore
         platformConfig: this.platformConfigPDA,
